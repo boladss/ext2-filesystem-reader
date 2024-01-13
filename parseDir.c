@@ -50,3 +50,11 @@ superblock * parseSuperBlock(FILE *fs){
 
     return sb;
 }
+
+uint computeBlockGroupNum(superblock * sb, uint inode){
+    return (inode - 1) / sb->inode_num;
+}
+
+// references used: 
+// https://wiki.osdev.org/Ext2
+// https://www.nongnu.org/ext2-doc/

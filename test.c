@@ -10,6 +10,10 @@ void test_parseDir(FILE * fs){
     printf("BGDT block: %u\n", sb->bgdt_block);
     printf("inode size: %u\n", sb->inode_sz);
     printf("starting block of inode table: %u\n", sb->inode_table);
+
+    printf("block group num of inode 200: %u\n", computeBlockGroupNum(sb, 200));
+    printf("block group num of inode 208: %u\n", computeBlockGroupNum(sb, 208));
+    printf("block group num of inode 300: %u\n", computeBlockGroupNum(sb, 300));
 }
 
 int main(){
