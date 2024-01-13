@@ -4,7 +4,7 @@
 typedef unsigned int uint;
 typedef unsigned char uchar;
 
-#define BOOT_SZ 1024
+#define SB_START 1024
 
 typedef struct superblock{
     uint block_sz; // byte offsets 24-27
@@ -29,7 +29,7 @@ uint readInt(FILE *fs, uint offset, uint size){
     //little endian
     for(int i = 0; i < size; i++){
         ret |= buffer[i] << i*4;
-        //printf("addr: %u\nbuffer[%d]: %u\nret: %u\n",BOOT_SZ+offset, i, buffer[i], ret);
+        //printf("addr: %u\nbuffer[%d]: %u\nret: %u\n",SB_START+offset, i, buffer[i], ret);
     }
 
     return ret;
@@ -39,11 +39,11 @@ superblock * parseSuperBlock(FILE *fs){
     superblock * sb = (superblock *) malloc(sizeof(superblock));
 
     //get block size
-    sb->block_sz = BOOT_SZ << readInt(fs, BOOT_SZ+24, 4);
-    sb->block_num = readInt(fs, BOOT_SZ+32, 4);
-    sb->inode_num = readInt(fs, BOOT_SZ+40, 4);
-    sb->bgdt_block = (BOOT_SZ / sb->block_sz) + 1;
-    sb->inode_sz = readInt(fs, BOOT_SZ+88, 2);
+    sb->block_sz = SB_START << readInt(fs, SB_START+24, 4);
+    sb->block_num = readInt(fs, SB_START+32, 4);
+    sb->inode_num = readInt(fs, SB_START+40, 4);
+    sb->bgdt_block = (SB_START / sb->block_sz) + 1;
+    sb->inode_sz = readInt(fs, SB_START+88, 2);
 
     uint entry_addr = (sb->bgdt_block*sb->block_sz) + 8;
     sb->inode_table = readInt(fs, entry_addr, 4);
