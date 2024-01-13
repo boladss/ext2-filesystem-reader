@@ -28,8 +28,8 @@ uint readInt(FILE *fs, uint offset, uint size){
 
     //little endian
     for(int i = 0; i < size; i++){
-        ret |= buffer[i] << i*4;
-        //printf("addr: %u\nbuffer[%d]: %u\nret: %u\n",SB_START+offset, i, buffer[i], ret);
+        ret |= buffer[i] << (i*8);
+        printf("addr: %u\nbuffer[%d]: %u\nret: %u\n\n",SB_START+offset, i, buffer[i], ret);
     }
 
     return ret;
