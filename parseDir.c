@@ -10,7 +10,8 @@ typedef struct superblock{
     uint block_sz; // byte offsets 24-27
     uint block_num; // byte offsets 32-35
     uint inode_num; // byte offsets 40-43
-    uint inode_sz; // byte ooffsets 88-89
+    uint inode_sz; // byte offsets 88-89
+    uint inode_table; //starting block offset of inode table, should be same for all groups
     uint bgdt_block; // block after superblock
 } superblock;
 
@@ -44,14 +45,8 @@ superblock * parseSuperBlock(FILE *fs){
     sb->bgdt_block = (BOOT_SZ / sb->block_sz) + 1;
     sb->inode_sz = readInt(fs, BOOT_SZ+88, 2);
 
+    uint entry_addr = (sb->bgdt_block*sb->block_sz) + 8;
+    sb->inode_table = readInt(fs, entry_addr, 4);
+
     return sb;
-}
-
-// returns starting block number of inode table
-uint getInodeTableBlock(FILE * fs, uint group_num, uint bgdt_block, uint block_sz){
-    uint entry_addr = (bgdt_block*block_sz) + (group_num*32) + 8;
-
-    //printf("entry: %u\n", entry_addr);
-
-    return readInt(fs, entry_addr, 4);
 }
