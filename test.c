@@ -6,7 +6,5 @@ int main(){
 
     parseSuperBlock(fs, 1024);
 
-    printf("uwu\n");
-
     return 0;
 }

@@ -5,23 +5,20 @@ typedef unsigned char uchar;
 
 // take in filesystem file and starting superblock block address
 
-uint getBlockSize(FILE *fs, uint addr){
-    uchar buffer[1052];
+uint readInt(FILE *fs, uint addr, uint offset, uint size){
+    uchar buffer[size];
 
-    printf("addr: %p\n", fs);
-    printf("addr: %p\n", fs+addr);
-    printf("addr: %p\n", fs+addr+24);
+    fseek(fs, addr+offset, SEEK_SET);
+    fread(buffer, size, 1, fs);
 
-    fread(buffer, 1052, 1, fs);
+    uint ret = 0;
 
-    uint size = 0;
-
-    for(int i = 1048; i < 1052; i++){
-        printf("buffer[%d]: %u\n", i, buffer[i]);
-        size |= buffer[i] << (3-i);
+    for(int i = 0; i < size; i++){
+        ret |= buffer[i] << i*4;
+        printf("buffer[%d]: %u\nret: %u\n", i, buffer[i], ret);
     }
 
-    return size;
+    return ret;
 }
 
 void parseSuperBlock(FILE *fs, uint addr){
@@ -31,7 +28,7 @@ void parseSuperBlock(FILE *fs, uint addr){
     uint bgdt_addr;
 
     //get block size
-    block_sz = getBlockSize(fs, addr);
+    block_sz = 1024 << readInt(fs, addr, 24, 4);
 
     printf("block size: %u\n", block_sz);
 }
