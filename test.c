@@ -7,7 +7,9 @@ void test_parseDir(FILE * fs){
     printf("block size: %u\n", sb->block_sz);
     printf("number of blocks: %u\n", sb->block_num);
     printf("number of inodes: %u\n", sb->inode_num);
-    printf("BGDT address: %u\n", sb->bgdt_addr);
+    printf("BGDT block: %u\n", sb->bgdt_block);
+    printf("inode size: %u\n", sb->inode_sz);
+    printf("starting block of inode table: %u\n", getInodeTableBlock(fs, 0, sb->bgdt_block, sb->block_sz));
 }
 
 int main(){
