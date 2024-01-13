@@ -10,12 +10,14 @@ void test_parseDir(FILE * fs){
     printf("BGDT block: %u\n", sb->bgdt_block);
     printf("inode size: %u\n", sb->inode_sz);
     
-    printf("starting block of inode table: %u\n", getInodeTableBlock(fs, 0, sb->bgdt_block, sb->block_sz));
+    uint inode_start = getInodeTableBlock(fs, 0, sb->bgdt_block, sb->block_sz);
+    printf("starting block of inode table: %u\n\n", inode_start);
 
-    printf("block group num of inode 200: %u\n", computeBlockGroupNum(sb, 200));
-    printf("block group num of inode 208: %u\n", computeBlockGroupNum(sb, 208));
-    printf("block group num of inode 300: %u\n", computeBlockGroupNum(sb, 300));
+    printf("block group num of inode 2: %u\n", computeBlockGroupNum(sb, 2));
+    printf("index of inode 2: %u\n", computeInodeIndex(sb, 2));
+    printf("block num of inode 2: %u\n\n", computeInodeBlock(sb, 2, inode_start));
 }
+
 
 int main(){
     FILE * fs = fopen("testfs", "r");

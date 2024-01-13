@@ -6,6 +6,7 @@ typedef unsigned char uchar;
 
 #define SB_START 1024
 
+//number of blocks and inodes are wrong
 typedef struct superblock{
     uint block_sz; // byte offsets 24-27
     uint block_num; // byte offsets 32-35
@@ -49,6 +50,14 @@ superblock * parseSuperBlock(FILE *fs){
 
 uint computeBlockGroupNum(superblock * sb, uint inode){
     return (inode - 1) / sb->inode_num;
+}
+
+uint computeInodeIndex(superblock * sb, uint inode){
+    return (inode - 1) % sb->inode_num;
+}
+
+uint computeInodeBlock(superblock * sb, uint index, uint start){
+    return ((index * sb->inode_sz) / sb->block_sz) + start;
 }
 
 // returns starting block number of inode table
