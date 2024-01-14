@@ -16,8 +16,11 @@ void test_parseDir(FILE * fs){
     inode_buffer[sb->inode_sz] = '\0';
     printf("data of inode 2:\n");
 
-    for(int i = 0; i < sb->inode_sz; i++){
-        printf("buffer[%d]: %x\n", i, inode_buffer[i]);
+    for(int i = 0; i < 16; i++){
+        for(int j = 0; j < 16; j++){
+            printf("%02x ", inode_buffer[(i*16)+j]);
+        }
+        printf("\n");
     }
 }
 
