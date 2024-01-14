@@ -5,10 +5,10 @@ void test_parseDir(FILE * fs){
     superblock * sb = parseSuperBlock(fs);
     
     printf("block size: %u\n", sb->block_sz);
-    printf("number of blocks per group: %u\n", sb->block_num);
-    printf("number of inodes per group: %u\n", sb->inode_num);
-    printf("BGDT block: %u\n", sb->bgdt_block);
-    printf("inode size: %u\n", sb->inode_sz);
+    printf("number of blocks per group: %u\n", sb->num_of_blocks);
+    printf("number of inodes per group: %u\n", sb->num_of_inodes);
+    printf("BGDT block: %u\n", sb->bgdt_block_num);
+    printf("inode size: %u\n\n", sb->inode_sz);
 
     //printf("block num of inode 2: %u\n\n", findBlockNumber(fs, sb, 2));
     uchar inode_buffer[sb->inode_sz];
@@ -30,6 +30,8 @@ void test_parseDir(FILE * fs){
     //for(int i = 0; i < sb->block_sz; i++){
     //    printf("%c", data_buffer[i]);
     //}
+
+    parseDirEntries(fs, sb, in);
 }
 
 

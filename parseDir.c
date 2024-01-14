@@ -1,3 +1,6 @@
+// TO DO: refactor
+//        add error handlers
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -8,10 +11,10 @@ typedef unsigned char uchar;
 
 typedef struct superblock{
     uint block_sz; // byte offsets 24-27
-    uint block_num; // byte offsets 32-35
-    uint inode_num; // byte offsets 40-43
+    uint num_of_blocks; // byte offsets 32-35
+    uint num_of_inodes; // byte offsets 40-43
     uint inode_sz; // byte offsets 88-89
-    uint bgdt_block; // block after superblock
+    uint bgdt_block_num; // block after superblock
 } superblock;
 
 typedef struct inode{
@@ -22,6 +25,11 @@ typedef struct inode{
     uint double_ind; // byte offsets 92-95, doubly indirect block number
     uint triple_ind; // byte offsets 96-99, triply indirect block number
 } inode;
+
+typedef struct dir_entry{
+    uint inode_num; // byte offsets 0-3, inode number
+    char * dir_name; // byte offset 8 onwards, name of directory
+} dir_entry;
 
 // add variables to store default values ?
 
@@ -46,9 +54,9 @@ superblock * parseSuperBlock(FILE *fs){
 
     //get block size
     sb->block_sz = SB_START << readInt(fs, SB_START+24, 4);
-    sb->block_num = readInt(fs, SB_START+32, 4);
-    sb->inode_num = readInt(fs, SB_START+40, 4);
-    sb->bgdt_block = (SB_START / sb->block_sz) + 1;
+    sb->num_of_blocks = readInt(fs, SB_START+32, 4);
+    sb->num_of_inodes = readInt(fs, SB_START+40, 4);
+    sb->bgdt_block_num = (SB_START / sb->block_sz) + 1;
     sb->inode_sz = readInt(fs, SB_START+88, 2);
 
     return sb;
@@ -58,14 +66,14 @@ superblock * parseSuperBlock(FILE *fs){
 inode * getInode(FILE * fs, superblock * sb, uint i_num){
     uchar buffer[sb->block_sz];
 
-    uint block_group_num = (i_num - 1) / sb->inode_num; // which block group the inode is in
+    uint block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
 
-    uint entry_addr = (sb->bgdt_block*sb->block_sz) + (block_group_num*32) + 8;
+    uint entry_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8;
     uint inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
 
-    uint inode_index = (i_num - 1) % sb->inode_num; // index of inode in table
-    uint inode_block_number = ((inode_index * sb->inode_sz) / sb->block_sz) + inode_table_start; // block containing inode
-    uint inode_addr = (inode_block_number * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
+    uint inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
+    uint inode_num_of_blocksber = ((inode_index * sb->inode_sz) / sb->block_sz) + inode_table_start; // block containing inode
+    uint inode_addr = (inode_num_of_blocksber * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
 
     //fseek(fs, inode_addr, SEEK_SET);
     //fread(buffer, sb->inode_sz, 1, fs);
@@ -113,7 +121,55 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
 }
 
 
-//get block numbers from inode
+// get directory block
+// parse directory block entries from directory block
+void parseDirEntries(FILE * fs, superblock * sb, inode * in){
+    // get directory block from inode
+    // for each block print new dir_entry to array
+    // FOR LATER: append to array containing all directory entries
+
+    uint i_num;
+    char dir_name[256];
+    uint dir_len;
+    uint curr_size;
+    uint curr_addr;
+    uint dir_size;
+
+    //direct pointers
+    for(int i = 0; i < 12; i++){
+        if(in->direct[i] == 0) break; //skip empty pointers
+
+        curr_size = 0;
+
+        do{
+            //read data block
+            curr_addr = in->direct[i]*sb->block_sz + curr_size;
+
+            i_num = readInt(fs, curr_addr, 4); // get inode number
+            dir_len = readInt(fs, curr_addr+6, 1); // get dir name length
+            dir_size = readInt(fs, curr_addr+4, 2);
+            
+            //get directory name
+            fseek(fs, curr_addr+8, SEEK_SET);
+            fread(dir_name, dir_len, 1, fs);
+            dir_name[dir_len] = '\0';
+
+            //print values to check
+            printf("inode number: %d\n", i_num);
+            printf("dir name: %s\n\n", dir_name);
+            
+            curr_size += dir_size;
+        }while(curr_size < in->file_sz && (curr_size % 4096 != 0));
+
+    }
+
+    //single
+    
+    //double
+
+    //triple
+}
+
 
 
 // references used: 
