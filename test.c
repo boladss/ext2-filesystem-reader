@@ -11,9 +11,8 @@ void test_parseDir(FILE * fs){
     printf("inode size: %u\n", sb->inode_sz);
 
     //printf("block num of inode 2: %u\n\n", findBlockNumber(fs, sb, 2));
-    uchar inode_buffer[sb->inode_sz+1];
+    uchar inode_buffer[sb->inode_sz];
     getInode(fs, sb, 2, inode_buffer);
-    inode_buffer[sb->inode_sz] = '\0';
     printf("data of inode 2:\n");
 
     for(int i = 0; i < 16; i++){

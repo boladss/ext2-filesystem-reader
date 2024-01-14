@@ -17,19 +17,17 @@ typedef struct superblock{
 
 // add variables to store default values
 
-// take in filesystem file and starting superblock block address
+// reads file and returns an unsigned int based on data read
 uint readInt(FILE *fs, uint offset, uint size){
     uchar buffer[size];
+    uint ret = 0;
 
     fseek(fs, offset, SEEK_SET);
     fread(buffer, size, 1, fs);
 
-    uint ret = 0;
-
     //little endian
     for(int i = 0; i < size; i++){
         ret |= buffer[i] << (i*8);
-        //printf("addr: %u\nbuffer[%d]: %u\nret: %u\n\n",SB_START+offset, i, buffer[i], ret);
     }
 
     return ret;
