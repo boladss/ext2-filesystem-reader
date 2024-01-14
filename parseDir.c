@@ -6,7 +6,6 @@ typedef unsigned char uchar;
 
 #define SB_START 1024
 
-//number of blocks and inodes are wrong
 typedef struct superblock{
     uint block_sz; // byte offsets 24-27
     uint block_num; // byte offsets 32-35
@@ -15,7 +14,7 @@ typedef struct superblock{
     uint bgdt_block; // block after superblock
 } superblock;
 
-// add variables to store default values
+// add variables to store default values ?
 
 // reads file and returns an unsigned int based on data read
 uint readInt(FILE *fs, uint offset, uint size){

@@ -29,5 +29,7 @@ int main(){
 
     test_parseDir(fs);
 
+    fclose(fs);
+
     return 0;
 }
