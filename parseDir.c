@@ -48,25 +48,21 @@ superblock * parseSuperBlock(FILE *fs){
     return sb;
 }
 
-uint computeBlockGroupNum(superblock * sb, uint inode){
-    return (inode - 1) / sb->inode_num;
-}
+// returns inode data as array of bytes
+void getInode(FILE * fs, superblock * sb, uint inode, uchar * buffer){
+    uint block_group_num = (inode - 1) / sb->inode_num; // which block group the inode is in
 
-uint computeInodeIndex(superblock * sb, uint inode){
-    return (inode - 1) % sb->inode_num;
-}
+    uint entry_addr = (sb->bgdt_block*sb->block_sz) + (block_group_num*32) + 8;
+    uint inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
 
-uint computeInodeBlock(superblock * sb, uint index, uint start){
-    return ((index * sb->inode_sz) / sb->block_sz) + start;
-}
+    uint inode_index = (inode - 1) % sb->inode_num; // index of inode in table
+    uint inode_block_number = ((inode_index * sb->inode_sz) / sb->block_sz) + inode_table_start; // block containing inode
+    uint inode_addr = (inode_block_number * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
 
-// returns starting block number of inode table
-uint getInodeTableBlock(FILE * fs, uint group_num, uint bgdt_block, uint block_sz){
-    uint entry_addr = (bgdt_block*block_sz) + (group_num*32) + 8;
+    fseek(fs, inode_addr, SEEK_SET);
+    fread(buffer, sb->inode_sz, 1, fs);
 
-    //printf("entry: %u\n", entry_addr);
-
-    return readInt(fs, entry_addr, 4);
+    return;
 }
 
 // references used: 
