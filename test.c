@@ -31,7 +31,7 @@ void test_parseDir(FILE * fs){
     //    printf("%c", data_buffer[i]);
     //}
 
-    parseDirEntries(fs, sb, in, "");
+    //parseDirEntries(fs, sb, in, "");
 
     free(in);
 }

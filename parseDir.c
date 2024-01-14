@@ -21,7 +21,7 @@ typedef struct superblock{
 } superblock;
 
 typedef struct inode{
-    uint addr; // starting address
+    //uint addr; // starting address
     uint isDir; // determined by bytes 0-1, value of 0x4000 when it is a directory 
     uint file_sz; // byte offsets 4-7
     uint direct[12]; // byte offsets 40-87, 12 direct block numbers
@@ -91,7 +91,7 @@ inode * getInode(FILE * fs, superblock * sb, uint i_num){
     // gives an error when file size is too large
     inode * in = (inode *) malloc(sizeof(inode));
 
-    in->addr = inode_addr;
+    //in->addr = inode_addr;
     in->isDir = (0x4000 & readInt(fs, inode_addr, 2)) >> 14;
     in->file_sz = readInt(fs, inode_addr+4, 4);
     
@@ -133,7 +133,7 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
 
 // print directory entry based on address
 // TODO: clean this
-void printDirEntries(FILE * fs, superblock * sb, uint addr, char * path){
+/*void printDirEntries(FILE * fs, superblock * sb, uint addr, char * path){
     char dir_name[256];
     uint i_num = readInt(fs, addr, 4); // get inode number
     uint dir_len = readInt(fs, addr+6, 1); // get dir name length
@@ -144,7 +144,7 @@ void printDirEntries(FILE * fs, superblock * sb, uint addr, char * path){
     dir_name[dir_len] = '\0';
 
     if(strcmp(dir_name, ".") && strcmp(dir_name, "..")){  // exclude own and parent directory
-        char path_buffer[4096];
+        char path_buffer[256];
         path_buffer[0] = '\0';
         strcat(path_buffer, path);
         
@@ -157,7 +157,7 @@ void printDirEntries(FILE * fs, superblock * sb, uint addr, char * path){
             parseDirEntries(fs, sb, in, path_buffer);
         }
         else{
-            char name_buffer[4096];
+            char name_buffer[256];
             name_buffer[0] = '\0';
             strcat(name_buffer, path);
             strcat(name_buffer, dir_name);
@@ -177,7 +177,7 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, char * path){
     uint curr_size;
     uint curr_addr;
 
-    char path_buffer[4096];
+    char path_buffer[256];
     path_buffer[0] = '\0';
     strcat(path_buffer, path);
     strcat(path_buffer, "/");
@@ -192,7 +192,7 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, char * path){
 
         do{
             //read data block
-            char buffer[4096];
+            char buffer[256];
             strcpy(buffer, path_buffer);
 
             curr_addr = in->direct[i]*sb->block_sz + curr_size;
@@ -212,7 +212,7 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, char * path){
         for(int i = 0; i < sb->block_sz; i += 4){
             do{
                 //read data block
-                char buffer[4096];
+                char buffer[256];
                 strcpy(buffer, path_buffer);
 
                 curr_addr = in->direct[i]*sb->block_sz + curr_size;
@@ -225,17 +225,17 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, char * path){
     }
     
     //double
-    if(!in->double_ind){
+    if(in->double_ind){
         // handler for double indirect block
     }
 
     //triple
-    if(!in->triple_ind){
+    if(in->triple_ind){
         // handler for triple indirect block
     }
 
     //free(in);
-}
+}*/
 
 
 
