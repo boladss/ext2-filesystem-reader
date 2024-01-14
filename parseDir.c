@@ -14,6 +14,15 @@ typedef struct superblock{
     uint bgdt_block; // block after superblock
 } superblock;
 
+typedef struct inode{
+    uint addr; // starting address
+    uint file_sz; // byte offsets 4-7
+    uint direct[12]; // byte offsets 40-87, 12 direct block numbers
+    uint single_ind; // byte offsets 88-91, singly indirect block number
+    uint double_ind; // byte offsets 92-95, doubly indirect block number
+    uint triple_ind; // byte offsets 96-99, triply indirect block number
+} inode;
+
 // add variables to store default values ?
 
 // reads file and returns an unsigned int based on data read
@@ -46,20 +55,51 @@ superblock * parseSuperBlock(FILE *fs){
 }
 
 // get inode data using inode number
-void getInode(FILE * fs, superblock * sb, uint inode, uchar * buffer){
-    uint block_group_num = (inode - 1) / sb->inode_num; // which block group the inode is in
+inode * getInode(FILE * fs, superblock * sb, uint i_num){
+    uchar buffer[sb->block_sz];
+
+    uint block_group_num = (i_num - 1) / sb->inode_num; // which block group the inode is in
 
     uint entry_addr = (sb->bgdt_block*sb->block_sz) + (block_group_num*32) + 8;
     uint inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
 
-    uint inode_index = (inode - 1) % sb->inode_num; // index of inode in table
+    uint inode_index = (i_num - 1) % sb->inode_num; // index of inode in table
     uint inode_block_number = ((inode_index * sb->inode_sz) / sb->block_sz) + inode_table_start; // block containing inode
     uint inode_addr = (inode_block_number * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
 
-    fseek(fs, inode_addr, SEEK_SET);
-    fread(buffer, sb->inode_sz, 1, fs);
+    //fseek(fs, inode_addr, SEEK_SET);
+    //fread(buffer, sb->inode_sz, 1, fs);
 
-    return;
+    //parse inode data
+    inode * in = (inode *) malloc(sizeof(inode));
+
+    in->addr = inode_addr;
+    in->file_sz = readInt(fs, inode_addr+4, 4);
+    
+    uint num_blocks = in->file_sz / sb->block_sz; //number of blocks occupied by file
+    // determines how many pointers are used
+    
+    // direct pointers
+    for(int i = 0; i < num_blocks; i++){
+        in->direct[i] = readInt(fs, inode_addr+40+(i*4), 4);
+    }
+
+    // if blocks > 12, use single indirect block
+    if(num_blocks > 12){
+        in->single_ind = readInt(fs, inode_addr+88, 4);
+    }
+
+    //if blocks > (12 + block_sz), use double indirect block
+    if(num_blocks > 12 + sb->block_sz){
+        in->double_ind = readInt(fs, inode_addr+92, 4);
+    }
+
+    //if blocks > (12 + block_sz + block_sz^2), use triple indirect block
+    if(num_blocks > 12 + sb->block_sz + sb->block_sz*sb->block_sz){
+        in->triple_ind = readInt(fs, inode_addr+96, 4);
+    }
+
+    return in;
 }
 
 // get data block using block number
@@ -71,6 +111,9 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
 
     return;
 }
+
+
+//get block numbers from inode
 
 
 // references used: 

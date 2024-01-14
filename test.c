@@ -12,8 +12,8 @@ void test_parseDir(FILE * fs){
 
     //printf("block num of inode 2: %u\n\n", findBlockNumber(fs, sb, 2));
     uchar inode_buffer[sb->inode_sz];
-    getInode(fs, sb, 18, inode_buffer);
-    printf("data of inode 2:\n");
+    inode * in = getInode(fs, sb, 2);
+    /*printf("data of inode 2:\n");
 
     for(int i = 0; i < 16; i++){
         for(int j = 0; j < 16; j++){
@@ -22,14 +22,14 @@ void test_parseDir(FILE * fs){
         printf("\n");
     }
 
-    printf("\n");
+    printf("\n");*/
 
     uchar data_buffer[sb->block_sz];
     getDataBlock(fs, sb, 1537, data_buffer);
 
-    for(int i = 0; i < sb->block_sz; i++){
-        printf("%c", data_buffer[i]);
-    }
+    //for(int i = 0; i < sb->block_sz; i++){
+    //    printf("%c", data_buffer[i]);
+    //}
 }
 
 
