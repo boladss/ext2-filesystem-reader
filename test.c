@@ -32,6 +32,8 @@ void test_parseDir(FILE * fs){
     //}
 
     parseDirEntries(fs, sb, in, "");
+
+    free(in);
 }
 
 
