@@ -45,7 +45,7 @@ superblock * parseSuperBlock(FILE *fs){
     return sb;
 }
 
-// returns inode data as array of bytes
+// get inode data using inode number
 void getInode(FILE * fs, superblock * sb, uint inode, uchar * buffer){
     uint block_group_num = (inode - 1) / sb->inode_num; // which block group the inode is in
 
@@ -61,6 +61,17 @@ void getInode(FILE * fs, superblock * sb, uint inode, uchar * buffer){
 
     return;
 }
+
+// get data block using block number
+void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
+    uint addr = sb->block_sz * block;
+
+    fseek(fs, addr, SEEK_SET);
+    fread(buffer, sb->block_sz, 1, fs);
+
+    return;
+}
+
 
 // references used: 
 // https://wiki.osdev.org/Ext2

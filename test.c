@@ -21,6 +21,15 @@ void test_parseDir(FILE * fs){
         }
         printf("\n");
     }
+
+    printf("\n");
+
+    uchar data_buffer[sb->block_sz];
+    getDataBlock(fs, sb, 1537, data_buffer);
+
+    for(int i = 0; i < sb->block_sz; i++){
+        printf("%c", data_buffer[i]);
+    }
 }
 
 
