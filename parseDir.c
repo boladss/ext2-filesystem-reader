@@ -131,47 +131,9 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
     return;
 }
 
-
-// iterate through directory entries based on inode data
-/*void parseDirBlock(FILE *fs, superblock *sb, inode * in){
-    // go through all pointers of inode and print contents
-    uint curr_size = 0; //number of bytes read for each data block
-    uint curr_addr;
-    char dir_name[256];
-    uint i_num; // get inode number
-    uint dir_len; // get dir name length
-    
-    //direct pointers
-    for(int i = 0; i < 12; i++){
-        if(in->direct[i] == 0) break; // skip empty pointers
-
-        //read one block
-        do{
-            curr_addr = in->direct[i]*sb->block_sz + curr_size;
-
-            dir_name[256];
-            i_num = readInt(fs, curr_addr, 4); // get inode number
-            dir_len = readInt(fs, curr_addr+6, 1); // get dir name length
-
-            //get directory name
-            fseek(fs, curr_addr+8, SEEK_SET);
-            fread(dir_name, dir_len, 1, fs);
-            dir_name[dir_len] = '\0';
-
-            printf("%s\n", dir_name);
-            
-            curr_size += readInt(fs, curr_addr+4, 2); //directory entry size
-        }while(curr_size < in->file_sz && (curr_size % sb->block_sz == 0)); 
-
-        //go through all entries
-    }
-}*/
-
-
-
 // print directory entry based on address
 // TODO: clean this
-void printDirEntries(FILE * fs, superblock * sb, uint addr, char * path){
+void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
     uint i_num = readInt(fs, addr, 4); // get inode number
     uint dir_len = readInt(fs, addr+6, 1); // get dir name length
     char dir_name[dir_len+1];
@@ -209,7 +171,7 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, uint addr, uint * c
         //read data block
         curr_addr = addr + *curr_size;
 
-        printDirEntries(fs, sb, curr_addr, path);
+        printDirContents(fs, sb, curr_addr, path);
             
         *curr_size += readInt(fs, curr_addr+4, 2); //directory entry size
     }while(*curr_size < in->file_sz && (*curr_size % 4096 != 0));
@@ -251,11 +213,7 @@ void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
         // handler for triple indirect block
     }
 
-    //free(in);
 }
-
-
-
 
 
 // references used: 
