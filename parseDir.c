@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
 #include <string.h>
 
 typedef unsigned int uint;
@@ -21,7 +20,7 @@ typedef struct superblock{
 } superblock;
 
 typedef struct inode{
-    //uint addr; // starting address
+    uint addr; // starting address
     uint isDir; // determined by bytes 0-1, value of 0x4000 when it is a directory 
     uint file_sz; // byte offsets 4-7
     uint direct[12]; // byte offsets 40-87, 12 direct block numbers
@@ -29,11 +28,6 @@ typedef struct inode{
     uint double_ind; // byte offsets 92-95, doubly indirect block number
     uint triple_ind; // byte offsets 96-99, triply indirect block number
 } inode;
-
-typedef struct dir_entry{
-    uint inode_num; // byte offsets 0-3, inode number
-    char * dir_name; // byte offset 8 onwards, name of directory
-} dir_entry;
 
 
 void parseDirInode(FILE *, superblock *, inode *, char *);
@@ -91,7 +85,7 @@ inode * getInode(FILE * fs, superblock * sb, uint i_num){
     // gives an error when file size is too large
     inode * in = (inode *) malloc(sizeof(inode));
 
-    //in->addr = inode_addr;
+    in->addr = inode_addr;
     in->isDir = (0x4000 & readInt(fs, inode_addr, 2)) >> 14;
     in->file_sz = readInt(fs, inode_addr+4, 4);
     
@@ -99,7 +93,7 @@ inode * getInode(FILE * fs, superblock * sb, uint i_num){
     // determines how many pointers are used
     
     // direct pointers
-    for(int i = 0; i < num_blocks; i++){
+    for(int i = 0; i < 12; i++){
         in->direct[i] = readInt(fs, inode_addr+40+(i*4), 4);
     }
 
@@ -194,13 +188,16 @@ void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) break; //skip empty pointers
 
+        //printf("owo");
         parseDirEntries(fs, sb, in, in->direct[i]*sb->block_sz, &curr_size, path);
     }
+
+    //printf("curr size: %u\n", curr_size);
+    //printf("file size: %u\n", in->file_sz);
 
 
     //single
     if(in->single_ind){
-        
     }
     
     //double
