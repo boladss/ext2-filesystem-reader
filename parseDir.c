@@ -181,25 +181,50 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
 }
 
 // parses each directory entry from directory data block
-void parseDirEntries(FILE * fs, superblock * sb, inode * in, uint addr, uint * curr_size, char * path){
+void parseDirEntries(FILE * fs, superblock * sb, inode * in, uint addr, uint * bytes_read, char * path){
     uint curr_addr;
-    do{
-        //read data block
-        curr_addr = addr + *curr_size;
+    uint offset = 0;
+
+    while(*bytes_read < in->file_sz && (offset < sb->block_sz)){ // stops reading when number of bytes read is larger than file
+        //read data block                                // or when offset is bigger than block size
+        curr_addr = addr + offset;
 
         //printf("entry addr: %u\n", curr_addr);
 
+        //printf("bytes_read: %u\n", *bytes_read);
+        //printf("file size: %u\n", in->file_sz);
+
         printDirContents(fs, sb, curr_addr, path);
             
-        *curr_size += readInt(fs, curr_addr+4, 2); //directory entry size
-    }while(*curr_size < in->file_sz && (*curr_size % 4096 != 0));
+        offset += readInt(fs, curr_addr+4, 2); //directory entry size
+        *bytes_read += readInt(fs, curr_addr+4, 2);
+
+        
+        //printf("new bytes_read: %u\n", *bytes_read);
+    }
 }
+
+
+void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, uint * bytes_read, char * path){
+    // iterate through all direct pointers in block
+    // pointer size is 4 bytes
+    for(int i = 0; i < sb->block_sz; i+=4){
+        uint curr_offset = (in->single_ind*sb->block_sz)+i;
+        uint curr_addr = readInt(fs, curr_offset, 4) * 4096;
+
+        //skip empty pointers
+        if(curr_addr == 0) continue;
+
+        parseDirEntries(fs, sb, in, curr_addr, bytes_read, path);
+    }
+}
+
 
 // parse directory block entries from directory block
 // TODO: clean this
 void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
     // get directory block from inode
-    uint curr_size = 0;
+    uint bytes_read = 0;
 
     char new_path[4096];
     new_path[0] = '/';
@@ -208,54 +233,50 @@ void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
 
     printf("%s\n", path);
 
+    printf("file size: %u\n", in->file_sz);
+
     //direct pointers to data block
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) continue; //skip empty pointers
 
-        curr_size = 0;
-
         //printf("parse direct block address: %u\n", in->direct[i]*sb->block_sz);
 
         //printf("owo");
-        parseDirEntries(fs, sb, in, in->direct[i]*sb->block_sz, &curr_size, path);
+        parseDirEntries(fs, sb, in, in->direct[i]*sb->block_sz, &bytes_read, path);
     }
 
-    //printf("curr size: %u\n", curr_size);
+    //printf("curr size: %u\n", offset);
     //printf("file size: %u\n", in->file_sz);
 
     //("singly indirect pointer: %u\n", in->single_ind);
     //single
     
     if(in->single_ind){
-        //printf("singly indirect pointer: %u\n", in->single_ind);
-        //printf("file size: %u\n", in->file_sz);
-        //printf("starting addr: %u\n", in->addr);
-        // iterate through all direct pointers in block
-        // pointer size is 4 bytes
-        for(int i = 0; i < sb->block_sz; i+=4){
-            uint curr_offset = (in->single_ind*sb->block_sz)+i;
-            uint curr_addr = readInt(fs, curr_offset, 4) * 4096;
-
-            curr_size = 0;
-
-            //skip empty pointers
-            if(curr_addr == 0) continue;
-
-            //printf("curr_addr: %d\n", curr_addr);
-
-            parseDirEntries(fs, sb, in, curr_addr, &curr_size, path);
-        }
+        // handler for single indirect block
+        parseSingleIndirect(fs, sb, in, &bytes_read, path);
     }
     
     
     //double
-    if(in->double_ind){
+    if(in->double_ind){ 
         // handler for double indirect block
+        // contains pointers to block containing singly indirect blocks
+
+        for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            parseSingleIndirect(fs, sb, in, &bytes_read, path);
+        }
     }
 
     //triple
     if(in->triple_ind){
         // handler for triple indirect block
+        // contains pointers to blocks containing doubly indirect blocks
+
+        for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+                parseSingleIndirect(fs, sb, in, &bytes_read, path);
+            }
+        }
     }
 
 }
