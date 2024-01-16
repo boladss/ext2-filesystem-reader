@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "parseDir.c"
+#include "filepath.c"
 
 void test_parseDir(FILE * fs){
     superblock * sb = parseSuperBlock(fs);
@@ -57,6 +58,12 @@ int main(int argc, char *argv[]){
 
     if(argc == 2){
         printAllFiles(argv[1]);
+    }
+
+    if(argc == 3){
+        char * filepath = cleanInput(argv[2]);
+
+        printf("filepath: %s\n", filepath);
     }
 
     return 0;
