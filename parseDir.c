@@ -226,4 +226,5 @@ void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
 
 // references used: 
 // https://wiki.osdev.org/Ext2
-// https://www.nongnu.org/ext2-doc/
+//    - inode computation
+//    - inode flag for dir

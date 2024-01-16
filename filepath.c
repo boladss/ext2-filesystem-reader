@@ -7,13 +7,9 @@
 
 
 // removes repeated forward slashes
-const char * cleanInput(char * input){
+char * cleanInput(char * input){
     int i = 0;
     char * output = (char*) malloc((4096)*sizeof(char));
-
-    if(*input != '/'){
-        return -1;
-    } 
 
     do{
         output[i++] = '/';
