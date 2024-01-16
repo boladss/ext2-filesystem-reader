@@ -38,7 +38,8 @@ void test_parseDir(FILE * fs){
     free(in);
 }
 
-void printAllFiles(FILE * fs){
+void printAllFiles(char * filename){
+    FILE * fs = fopen(filename, "r");
     superblock * sb = parseSuperBlock(fs);
     inode * in = getInode(fs, sb, 2);
     char path[4096];
@@ -47,21 +48,16 @@ void printAllFiles(FILE * fs){
     parseDirInode(fs, sb, in, path);
 
     free(in);
+
+    fclose(fs);
 }
 
 
 int main(int argc, char *argv[]){
-    FILE * fs = fopen(argv[1], "r");
-
-    
-    printf("args: %d\n", argc);
 
     if(argc == 2){
-        printAllFiles(fs);
+        printAllFiles(argv[1]);
     }
-
-    
-    fclose(fs);
 
     return 0;
 }
