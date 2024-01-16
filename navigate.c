@@ -37,8 +37,11 @@ void navigate(FILE * fs, char * path){
         filename[j] = '\0';
 
         // look for filename in directory block of current dir inode
+        // if filename is found : navigate to filename's inode
+        // else : INVALID PATH, return -1
     }
 
-    // print 
-
+    // using current inode, determine if dir or reg file
+    // if dir : copy all contents of dir, return 0
+    // if reg file : copy file to host, return 0
 }
