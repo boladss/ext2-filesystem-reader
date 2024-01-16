@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "parseDir.c"
-#include "filepath.c"
+#include "navigate.c"
 
 void test_parseDir(FILE * fs){
     superblock * sb = parseSuperBlock(fs);
@@ -53,8 +52,18 @@ void printAllFiles(char * filename){
     fclose(fs);
 }
 
+void testNavigate(){
+    FILE * fs = fopen("testfs", "r");
+
+    navigate(fs, "/");
+
+    fclose(fs);
+}
 
 int main(int argc, char *argv[]){
+    if(argc == 1){
+        testNavigate();
+    }
 
     if(argc == 2){
         printAllFiles(argv[1]);
