@@ -4,7 +4,12 @@
 #include "filepath.c"
 
 
-// for operations 2 and 3
+// for operations 2
+
+// things left to do:
+//   1. indirect handling
+//   2. copyinig of file
+//   3. return 0 or -1 depending on outcome
 
 // file navigation:
 // 1. check root inode
@@ -134,16 +139,7 @@ void navigate(FILE * fs, char * path){
             return;
         }
 
-        // if not last : has to be a directory
-        // got through each pointer in dir inode
-        // for each pointer:
-        // look for filename in directory block of current dir inode
-        // if filename is found : navigate to filename's inode
-        // else : INVALID PATH, return -1
-
         result = searchDir(fs, sb, in, filename, 1);
-
-        //printf("next inode: %d\n", result);
 
         if(result == -1) {
             printf("no file found\n");
