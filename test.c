@@ -48,6 +48,7 @@ void printAllFiles(char * filename){
     parseDirInode(fs, sb, in, path);
 
     free(in);
+    free(sb);
 
     fclose(fs);
 }

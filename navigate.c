@@ -39,6 +39,8 @@ void navigate(FILE * fs, char * path){
         // look for filename in directory block of current dir inode
         // if filename is found : navigate to filename's inode
         // else : INVALID PATH, return -1
+
+        
     }
 
     // using current inode, determine if dir or reg file

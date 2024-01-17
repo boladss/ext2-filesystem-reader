@@ -29,6 +29,13 @@ typedef struct inode{
     uint triple_ind; // byte offsets 96-99, triply indirect block number
 } inode;
 
+typedef struct dir_entry {
+    uint inum; // byte offets 0-3, inode number
+    uint size; // bytes 4-5, size of dir entry in bytes
+    uint name_sz; // byte 6, size of name in bytes
+    char * dir_name; // name of directory
+} dir_entry;
+
 void parseDirInode(FILE *, superblock *, inode *, char *);
 
 // reads file and returns an unsigned int based on data read
@@ -102,22 +109,41 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
     return;
 }
 
+// gets directory entry using address
+dir_entry * getDirEntry(FILE * fs, superblock * sb, uint addr){
+    dir_entry * dir = (dir_entry *) malloc(sizeof(dir_entry));
+
+    dir->inum = readInt(fs, addr, 4); // get inode number
+    dir->size = readInt(fs, addr+4, 2); // get size
+    dir->name_sz = readInt(fs, addr+6, 1);// get name size
+
+    //get dir name
+    dir->dir_name = (char *) malloc((sizeof(char)*dir->name_sz)+1);
+    fseek(fs, addr+8, SEEK_SET);
+    fread(dir->dir_name, dir->name_sz, 1, fs);
+    dir->dir_name[dir->name_sz] = '\0'; // set as string
+
+    return dir;
+}
+
+void freeDirEntry(dir_entry * dir){
+    free(dir->dir_name);
+    free(dir);
+}
+
 // print directory entry path based on address
 void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
-    uint i_num = readInt(fs, addr, 4); // get inode number
 
-    if(i_num == 0) return; // skip empty/invalid inodes
+    // get dir entry info
+    dir_entry * dir = getDirEntry(fs, sb, addr);
 
-    uint dir_len = readInt(fs, addr+6, 1); // get dir name length
-    char file_name[dir_len+1];
-            
-    //get directory name
-    fseek(fs, addr+8, SEEK_SET);
-    fread(file_name, dir_len, 1, fs);
-    file_name[dir_len] = '\0';
+    if(dir->inum == 0){
+        freeDirEntry(dir);
+        return;
+    }
 
-    if(strcmp(file_name, ".") && strcmp(file_name, "..")){  // exclude own and parent directory
-        inode * in = getInode(fs, sb, i_num);
+    if(strcmp(dir->dir_name, ".") && strcmp(dir->dir_name, "..")){  // exclude own and parent directory
+        inode * in = getInode(fs, sb, dir->inum);
 
         // for storing new path
         char buffer[4096];
@@ -125,7 +151,7 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
 
         // append dir_name to path
         strcat(buffer, path);
-        strcat(buffer, file_name);
+        strcat(buffer, dir->dir_name);
 
         // go into dir
         if(in->isDir){
@@ -138,6 +164,9 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
 
         free(in);
     }
+
+    freeDirEntry(dir);
+    return;
 }
 
 // parses each directory entry from directory data block
