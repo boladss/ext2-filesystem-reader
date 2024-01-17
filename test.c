@@ -60,6 +60,8 @@ void testNavigate(){
     navigate(fs, "/dir2/dir3/");
     navigate(fs, "/dir2/dir3/dir3_2/sankyuu.png");
     navigate(fs, "/d");
+    navigate(fs, "/");
+
 
     fclose(fs);
 }

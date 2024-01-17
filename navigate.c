@@ -23,7 +23,7 @@
 // file object name < 256 characters
 
 // searches directory and returns inode number of entry found
-// 
+// additionally parameter to indicate if looking for directory
 // returns -1 if not found
 int searchDir(FILE * fs, superblock * sb, inode * in, char * filename, int wantDir){
     // search in directory
@@ -51,23 +51,21 @@ int searchDir(FILE * fs, superblock * sb, inode * in, char * filename, int wantD
 
             if(!strcmp(filename, dir->name)){ // file is found
                 // get inode and check if directory
-                //printf("hewo\n");
+
                 if(wantDir){
                     inode * dir_in = getInode(fs, sb, dir->inum);
                     if(dir_in->isDir){ // path is found
-                        uint result = dir->inum;
+                        int result = dir->inum;
 
                         freeDirEntry(dir);
                         free(dir_in);
-
-                        //printf("path found\n");
 
                         return result;
                     }
                     free(dir_in);
                 }
                 else{
-                    uint result = dir->inum;
+                    int result = dir->inum;
                     freeDirEntry(dir);
                     return result;
                 }
@@ -97,6 +95,13 @@ void navigate(FILE * fs, char * path){
     path = cleanInput(path);
     printf("%s\n", path);
 
+    // if root directory
+    if(!strcmp(path, "/")){
+        printf("root po\n\n");
+        printf("inode addr: %x\n", in->addr);
+        return;
+    }
+
     for(int i = 1; i < strlen(path); i++){ // iterates through each filename in path
         char filename[256];
 
@@ -122,6 +127,7 @@ void navigate(FILE * fs, char * path){
             }
             else{
                 inode * in_2 = getInode(fs, sb, result);
+                printf("inode addr: %x\n", in_2->addr);
 
                 //if directory
                 if(in_2->isDir){
@@ -132,8 +138,6 @@ void navigate(FILE * fs, char * path){
                     printf("file da yo :3\n");
                 }
             }
-
-            // if file is regular file
 
             printf("\n");
             return;
@@ -151,8 +155,4 @@ void navigate(FILE * fs, char * path){
         }
         
     }
-
-    // using current inode, determine if dir or reg file
-    // if dir : copy all contents of dir, return 0
-    // if reg file : copy file to host, return 0
 }

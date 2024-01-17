@@ -5,9 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef unsigned int uint;
 typedef unsigned char uchar;
-
 
 #define SB_START 1024
 
