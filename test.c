@@ -59,8 +59,11 @@ void testNavigate(){
     navigate(fs, "/dir1/cs140");
     navigate(fs, "/dir2/dir3/");
     navigate(fs, "/dir2/dir3/dir3_2/sankyuu.png");
+    navigate(fs, "/dir2/dir3/./././../dir3/dir3_2/sankyuu.png");
     navigate(fs, "/d");
     navigate(fs, "/");
+    navigate(fs, "/./dir1/../");
+    navigate(fs, "/dir2/directory name with spaces/../../dir1/cs153.txt");
 
 
     fclose(fs);
