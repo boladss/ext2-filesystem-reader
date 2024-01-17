@@ -22,6 +22,8 @@ void navigate(FILE * fs, char * path){
     superblock * sb = parseSuperBlock(fs); // get superblock info
     inode * in = getInode(fs, sb, 2); // get root inode
 
+    uchar data_buffer[sb->block_sz];
+
     path = cleanInput(path);
     printf("%s\n", path);
 
@@ -36,10 +38,31 @@ void navigate(FILE * fs, char * path){
         }
         filename[j] = '\0';
 
+
+        // check if filename is last in path, account for trailing '/'
+        if(i == strlen(path) || path[i] == '/'){
+            printf("%s\n", filename);
+            printf("end of path\n");
+        }
+
+        // if not last : has to be a directory
+        // got through each pointer in dir inode
+        // for each pointer:
         // look for filename in directory block of current dir inode
         // if filename is found : navigate to filename's inode
         // else : INVALID PATH, return -1
 
+        // search in directory
+        //inode direct pointers
+        for(int i = 0; i < 12; i++){
+            if(in->direct[i] == 0) continue; // skip empty inode
+        }
+
+        //inode single indirect
+
+        //inode double indirect
+
+        //inode triple indirect
         
     }
 
