@@ -12,36 +12,36 @@ typedef unsigned char uchar;
 #define SB_START 1024
 
 typedef struct superblock{
-    uint block_sz; // byte offsets 24-27
-    uint num_of_blocks; // byte offsets 32-35
-    uint num_of_inodes; // byte offsets 40-43
-    uint inode_sz; // byte offsets 88-89
-    uint bgdt_block_num; // block after superblock
+    int block_sz; // byte offsets 24-27
+    int num_of_blocks; // byte offsets 32-35
+    int num_of_inodes; // byte offsets 40-43
+    int inode_sz; // byte offsets 88-89
+    int bgdt_block_num; // block after superblock
 } superblock;
 
 typedef struct inode{
-    uint addr; // starting address
-    uint isDir; // determined by bytes 0-1, value of 0x4000 when it is a directory 
-    uint file_sz; // byte offsets 4-7
-    uint direct[12]; // byte offsets 40-87, 12 direct block numbers
-    uint single_ind; // byte offsets 88-91, singly indirect block number
-    uint double_ind; // byte offsets 92-95, doubly indirect block number
-    uint triple_ind; // byte offsets 96-99, triply indirect block number
+    int addr; // starting address
+    int isDir; // determined by bytes 0-1, value of 0x4000 when it is a directory 
+    int file_sz; // byte offsets 4-7
+    int direct[12]; // byte offsets 40-87, 12 direct block numbers
+    int single_ind; // byte offsets 88-91, singly indirect block number
+    int double_ind; // byte offsets 92-95, doubly indirect block number
+    int triple_ind; // byte offsets 96-99, triply indirect block number
 } inode;
 
 typedef struct dir_entry {
-    uint inum; // byte offets 0-3, inode number
-    uint size; // bytes 4-5, size of dir entry in bytes
-    uint name_sz; // byte 6, size of name in bytes
-    char * dir_name; // name of directory
+    int inum; // byte offets 0-3, inode number
+    int size; // bytes 4-5, size of dir entry in bytes
+    int name_sz; // byte 6, size of name in bytes
+    char * name; // name of directory
 } dir_entry;
 
 void parseDirInode(FILE *, superblock *, inode *, char *);
 
 // reads file and returns an unsigned int based on data read
-uint readInt(FILE *fs, uint offset, uint size){
+int readInt(FILE *fs, int offset, int size){
     uchar buffer[size];
-    uint ret = 0;
+    int ret = 0;
 
     fseek(fs, offset, SEEK_SET);
     fread(buffer, size, 1, fs);
@@ -67,14 +67,14 @@ superblock * parseSuperBlock(FILE *fs){
 }
 
 // get inode data using inode number
-inode * getInode(FILE * fs, superblock * sb, uint i_num){
+inode * getInode(FILE * fs, superblock * sb, int i_num){
     uchar buffer[sb->block_sz];
 
-    uint block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
-    uint entry_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8;
-    uint inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
-    uint inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
-    uint inode_addr = (inode_table_start * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
+    int block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
+    int entry_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8;
+    int inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
+    int inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
+    int inode_addr = (inode_table_start * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
 
     //parse inode data
     inode * in = (inode *) malloc(sizeof(inode));
@@ -84,7 +84,7 @@ inode * getInode(FILE * fs, superblock * sb, uint i_num){
     in->file_sz = readInt(fs, inode_addr+4, 4);
     
     //number of blocks occupied by file; ceiling function
-    uint num_blocks = ((in->file_sz + sb->block_sz - 1) / sb->block_sz); 
+    int num_blocks = ((in->file_sz + sb->block_sz - 1) / sb->block_sz); 
     
     // direct pointers
     for(int i = 0; i < 12; i++){
@@ -100,8 +100,8 @@ inode * getInode(FILE * fs, superblock * sb, uint i_num){
 }
 
 // get data block using block number
-void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
-    uint addr = sb->block_sz * block;
+void getDataBlock(FILE * fs, superblock * sb, int block, uchar * buffer){
+    int addr = sb->block_sz * block;
 
     fseek(fs, addr, SEEK_SET);
     fread(buffer, sb->block_sz, 1, fs);
@@ -110,7 +110,7 @@ void getDataBlock(FILE * fs, superblock * sb, uint block, uchar * buffer){
 }
 
 // gets directory entry using address
-dir_entry * getDirEntry(FILE * fs, superblock * sb, uint addr){
+dir_entry * getDirEntry(FILE * fs, superblock * sb, int addr){
     dir_entry * dir = (dir_entry *) malloc(sizeof(dir_entry));
 
     dir->inum = readInt(fs, addr, 4); // get inode number
@@ -118,21 +118,21 @@ dir_entry * getDirEntry(FILE * fs, superblock * sb, uint addr){
     dir->name_sz = readInt(fs, addr+6, 1);// get name size
 
     //get dir name
-    dir->dir_name = (char *) malloc((sizeof(char)*dir->name_sz)+1);
+    dir->name = (char *) malloc((sizeof(char)*dir->name_sz)+1);
     fseek(fs, addr+8, SEEK_SET);
-    fread(dir->dir_name, dir->name_sz, 1, fs);
-    dir->dir_name[dir->name_sz] = '\0'; // set as string
+    fread(dir->name, dir->name_sz, 1, fs);
+    dir->name[dir->name_sz] = '\0'; // set as string
 
     return dir;
 }
 
 void freeDirEntry(dir_entry * dir){
-    free(dir->dir_name);
+    free(dir->name);
     free(dir);
 }
 
 // print directory entry path based on address
-void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
+void printDirContents(FILE * fs, superblock * sb, int addr, char * path){
 
     // get dir entry info
     dir_entry * dir = getDirEntry(fs, sb, addr);
@@ -142,7 +142,7 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
         return;
     }
 
-    if(strcmp(dir->dir_name, ".") && strcmp(dir->dir_name, "..")){  // exclude own and parent directory
+    if(strcmp(dir->name, ".") && strcmp(dir->name, "..")){  // exclude own and parent directory
         inode * in = getInode(fs, sb, dir->inum);
 
         // for storing new path
@@ -151,7 +151,7 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
 
         // append dir_name to path
         strcat(buffer, path);
-        strcat(buffer, dir->dir_name);
+        strcat(buffer, dir->name);
 
         // go into dir
         if(in->isDir){
@@ -170,9 +170,9 @@ void printDirContents(FILE * fs, superblock * sb, uint addr, char * path){
 }
 
 // parses each directory entry from directory data block
-void parseDirEntries(FILE * fs, superblock * sb, inode * in, uint addr, uint * bytes_read, char * path){
-    uint curr_addr;
-    uint offset = 0;
+void parseDirEntries(FILE * fs, superblock * sb, inode * in, int addr, int * bytes_read, char * path){
+    int curr_addr;
+    int offset = 0;
 
     // read directory data block                      
     // stops reading when number of bytes read is larger than file
@@ -188,12 +188,12 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, uint addr, uint * b
 }
 
 
-void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, uint * bytes_read, char * path){
+void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, int * bytes_read, char * path){
     // iterate through all direct pointers in block
     // pointer size is 4 bytes
     for(int i = 0; i < sb->block_sz; i+=4){
-        uint curr_offset = (in->single_ind*sb->block_sz)+i;
-        uint curr_addr = readInt(fs, curr_offset, 4) * 4096;
+        int curr_offset = (in->single_ind*sb->block_sz)+i;
+        int curr_addr = readInt(fs, curr_offset, 4) * 4096;
 
         //skip empty pointers
         if(curr_addr == 0) continue;
@@ -205,7 +205,7 @@ void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, uint * bytes_rea
 
 // parse directory block entries using inode
 void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
-    uint bytes_read = 0; // total number of bytes read 
+    int bytes_read = 0; // total number of bytes read 
 
     char new_path[4096];
     new_path[0] = '/';

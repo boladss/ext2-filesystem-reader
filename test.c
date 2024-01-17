@@ -56,7 +56,9 @@ void printAllFiles(char * filename){
 void testNavigate(){
     FILE * fs = fopen("testfs", "r");
 
-    navigate(fs, "/d/");
+    navigate(fs, "/dir1/cs140");
+    navigate(fs, "/dir2/dir3/");
+    navigate(fs, "/dir2/dir3/dir3_2/sankyuu.png");
     navigate(fs, "/d");
 
     fclose(fs);
