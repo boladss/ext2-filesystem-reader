@@ -65,12 +65,12 @@ int searchBlock(int fs, superblock * sb, inode * in, int curr_addr, char * filen
 }
 
 
-int searchSingleIndirectDir(int fs, superblock * sb, inode * in, char * filename, int * bytes_read, int wantDir){
+int searchSingleIndirectDir(int fs, superblock * sb, inode * in, int block_num, char * filename, int * bytes_read, int wantDir){
     int result;
 
     //iterate through each pointer
     for(int i = 0; i < sb->block_sz; i+=4){
-        int curr_offset = (in->single_ind*sb->block_sz)+i; // offset of direct pointer
+        int curr_offset = (block_num*sb->block_sz)+i; // offset of direct pointer
         int curr_addr = readInt(fs, curr_offset, 4) * 4096; // address of data block
 
             //skip empty pointers
@@ -116,7 +116,7 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
     //inode single indirect
     if(in->single_ind){
         //printf("single\n");
-        result = searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
+        result = searchSingleIndirectDir(fs, sb, in, in->single_ind, filename, &bytes_read, wantDir);
         if(result != 0) return result;
     }
 
@@ -126,7 +126,13 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
         // contains pointers to block containing singly indirect blocks
 
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
-            searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
+            // get double block
+
+            int d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
+            int d_block_num = readInt(fs, d_block, 4); // data block number
+
+            result = searchSingleIndirectDir(fs, sb, in, d_block_num, filename, &bytes_read, wantDir);
+            if(result != 0) return result;
         }
     }
 
@@ -136,8 +142,16 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
         // contains pointers to blocks containing doubly indirect blocks
 
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            // get triple block
+            int t_block = (in->triple_ind*sb->block_sz)+i;
+            int t_block_num = readInt(fs, t_block, 4); // data block number
+
             for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
-                searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
+                int d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
+                int d_block_num = readInt(fs, d_block, 4); // data block number
+
+                result = searchSingleIndirectDir(fs, sb, in, d_block_num, filename, &bytes_read, wantDir);
+                if(result != 0) return result;
             }
         }
     }

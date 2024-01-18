@@ -186,11 +186,11 @@ void parseDirEntries(int fs, superblock * sb, inode * in, int addr, int * bytes_
 }
 
 
-void parseSingleIndirect(int fs, superblock * sb, inode *in, int * bytes_read, char * path){
+void parseSingleIndirect(int fs, superblock * sb, inode *in, int block_num, int * bytes_read, char * path){
     // iterate through all direct pointers in block
     // pointer size is 4 bytes
     for(int i = 0; i < sb->block_sz; i+=4){
-        int curr_offset = (in->single_ind*sb->block_sz)+i;
+        int curr_offset = (block_num*sb->block_sz)+i;
         int curr_addr = readInt(fs, curr_offset, 4) * 4096;
 
         //skip empty pointers
@@ -223,16 +223,21 @@ void parseDirInode(int fs, superblock * sb, inode * in, char * path){
     //single
     if(in->single_ind){
         // handler for single indirect block
-        parseSingleIndirect(fs, sb, in, &bytes_read, path);
+        parseSingleIndirect(fs, sb, in, in->single_ind, &bytes_read, path);
     }
-    
+
     //double
     if(in->double_ind){ 
         // handler for double indirect block
         // contains pointers to block containing singly indirect blocks
 
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
-            parseSingleIndirect(fs, sb, in, &bytes_read, path);
+            // get double block
+
+            int d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
+            int d_block_num = readInt(fs, d_block, 4); // data block number
+
+           parseSingleIndirect(fs, sb, in, d_block_num, &bytes_read, path);
         }
     }
 
@@ -242,8 +247,15 @@ void parseDirInode(int fs, superblock * sb, inode * in, char * path){
         // contains pointers to blocks containing doubly indirect blocks
 
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            // get triple block
+            int t_block = (in->triple_ind*sb->block_sz)+i;
+            int t_block_num = readInt(fs, t_block, 4); // data block number
+
             for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
-                parseSingleIndirect(fs, sb, in, &bytes_read, path);
+                int d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
+                int d_block_num = readInt(fs, d_block, 4); // data block number
+
+                parseSingleIndirect(fs, sb, in, d_block_num, &bytes_read, path);
             }
         }
     }
