@@ -47,12 +47,13 @@ int searchBlock(int fs, superblock * sb, inode * in, int curr_addr, char * filen
                     free(dir_in);
 
                     return result;
-                    }
+                }
                 free(dir_in);
             }
             else{
                 int result = dir->inum;
                 freeDirEntry(dir);
+                printf("inode num: %u\n", result);
                 return result;
             }
         }

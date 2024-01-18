@@ -70,6 +70,7 @@ void testNavigate(){
     navigate(fs, "/");
     navigate(fs, "/./dir1/..//");
     navigate(fs, "/dir2/directory name with spaces////../../dir1/cs153.txt");
+    navigate(fs, "/dir2/book.txt");
 
 
     close(fs);
@@ -79,8 +80,12 @@ void test_dup(){
     int fs = open("testfs", O_RDONLY);
     superblock * sb = parseSuperBlock(fs);
     inode * in = getInode(fs, sb, 14);
+    inode * in_2 = getInode(fs, sb, 21);
+    inode * in_3 = getInode(fs, sb, 22);
 
-    duplicate_file(fs, sb, "cs140.txt",in);
+    duplicateFile(fs, sb, in, "cs140.txt");
+    duplicateFile(fs, sb, in_2, "ibuprofen.jpg");
+    duplicateFile(fs, sb, in_3, "book.txt");
 }
 
 int main(int argc, char *argv[]){
