@@ -69,7 +69,7 @@ inode * getInode(int fs, superblock * sb, int i_num){
     uchar buffer[sb->block_sz];
 
     int block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
-    int entry_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8;
+    int entry_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8; // copy of bgdt will be same for all block groups
     int inode_table_start = readInt(fs, entry_addr, 4); // starting block of inode table
     int inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
     int inode_addr = (inode_table_start * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry

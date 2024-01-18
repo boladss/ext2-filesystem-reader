@@ -83,15 +83,27 @@ void test_dup(){
     inode * in_2 = getInode(fs, sb, 21);
     inode * in_3 = getInode(fs, sb, 22);
 
-    duplicateFile(fs, sb, in, "cs140.txt");
+    duplicateFile(fs, sb, in, "dir/cs140.txt");
     duplicateFile(fs, sb, in_2, "ibuprofen.jpg");
     duplicateFile(fs, sb, in_3, "book.txt");
 }
 
+void test_dup_dir(){
+    int fs = open("testfs", O_RDONLY);
+    superblock * sb = parseSuperBlock(fs);
+    inode * in = getInode(fs, sb, 2); //root
+
+    char dir_name[256] = "output";
+    char path[4096] = "";
+
+    duplicateDir(fs, sb, in, dir_name, path);
+}
+
 int main(int argc, char *argv[]){
     if(argc == 1){
-        testNavigate();
+        //testNavigate();
         //test_dup();
+        test_dup_dir();
     }
 
     if(argc == 2){
@@ -101,9 +113,11 @@ int main(int argc, char *argv[]){
 
     if(argc == 3){
         char * filepath = cleanInput(argv[2]);
+        int fs = open("testfs", O_RDONLY);
 
         printf("filepath: %s\n", filepath);
 
+        navigate(fs, filepath);
     }
 
     return 0;

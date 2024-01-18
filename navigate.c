@@ -96,7 +96,6 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
     //inode direct pointers
 
     int bytes_read = 0; // total number of bytes read 
-    int offset = 0;
     int curr_addr;
     int result;
 
@@ -200,16 +199,19 @@ void navigate(int fs, char * path){
                 printf("no such file ://\n");
             }
             else{
-                inode * in_2 = getInode(fs, sb, result);
+                inode * file_in = getInode(fs, sb, result);
                 //printf("inode addr: %x\n", in_2->addr);
 
                 //if directory
-                if(in_2->isDir){
+                if(file_in->isDir){
                     printf("directory desu <3\n");
                 }
                 // regular file
                 else{
                     printf("file da yo :3\n");
+                    // copy file
+
+                    duplicateFile(fs, sb, file_in, filename);
                 }
             }
 

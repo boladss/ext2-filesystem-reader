@@ -2,6 +2,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #include "parseDir.c"
 
 // copy data block from fs to f
@@ -98,4 +99,56 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
     close(f);
 
     return;
+}
+
+// duplicate files inside of directory
+void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * path){
+    // using directory inode
+    // traverse through directory and copy each file
+    // recurse when next entry in dir is also a directory
+
+    // create output directory
+    mkdir(dir_name, 0777);
+
+    strcat(path, dir_name);
+    strcat(path, "/");
+
+    int bytes_read = 0;
+
+    // traverse through each entry 
+    //     if file: duplicate file
+    //     if directory: recurse
+    
+
+    // direct pointers
+    for(int i = 0; i < 12; i++){
+        if(in->direct[i] == 0) continue; // skip empty inode
+
+        int curr_addr = in->direct[i]*sb->block_sz;;
+        int offset = 0;
+
+        // directory entry
+        while(bytes_read < in->file_sz && (offset < sb->block_sz)){ 
+            dir_entry * dir = getDirEntry(fs, sb, curr_addr+offset);
+                
+            offset += dir->size;
+            bytes_read += dir->size;
+
+            inode * in_2 = getInode(fs, sb, dir->inum);
+            char new_path[4096];
+            new_path[0] = '\0';
+            strcat(new_path, path);
+            strcat(new_path, dir->name);
+
+            // if file, duplicate to output
+            if(!in_2->isDir){
+                //printf("new file: %s\n", new_path);
+                duplicateFile(fs, sb, in_2, new_path);
+            }
+
+            freeDirEntry(dir);
+        }
+    }
+
+
 }
