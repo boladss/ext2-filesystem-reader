@@ -24,7 +24,7 @@
 
 // searches directory and returns inode number of entry found
 // additionally parameter to indicate if looking for directory
-// returns -1 if not found
+// returns 0 if not found (should be fine since block zero always contains the superblock)
 int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir){
     // search in directory
     //inode direct pointers
@@ -81,7 +81,7 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
 
     //inode triple indirect
 
-    return -1;
+    return 0;
 }
 
 // takes in FILE pointer and path as inputs
@@ -122,7 +122,7 @@ void navigate(int fs, char * path){
             // if file is invalid
             result = searchDir(fs, sb, in, filename, 0);
 
-            if(result  == -1){
+            if(result  == 0){
                 printf("no such file ://\n");
             }
             else{
@@ -145,7 +145,7 @@ void navigate(int fs, char * path){
 
         result = searchDir(fs, sb, in, filename, 1);
 
-        if(result == -1) {
+        if(result == 0) {
             printf("no file found\n");
             return;
         }

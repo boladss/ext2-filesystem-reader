@@ -36,7 +36,7 @@ typedef struct dir_entry {
 
 void parseDirInode(int, superblock *, inode *, char *);
 
-// reads file and returns an unsigned int based on data read
+// reads file and returns an int based on data read
 int readInt(int fs, int offset, int size){
     uchar buffer[size];
     int ret = 0;
