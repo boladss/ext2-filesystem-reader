@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "navigate.c"
 
-void test_parseDir(FILE * fs){
+void test_parseDir(int fs){
     superblock * sb = parseSuperBlock(fs);
     
     printf("block size: %u\n", sb->block_sz);
@@ -39,7 +41,7 @@ void test_parseDir(FILE * fs){
 }
 
 void printAllFiles(char * filename){
-    FILE * fs = fopen(filename, "r");
+    int fs = open(filename, O_RDONLY);
     superblock * sb = parseSuperBlock(fs);
     inode * in = getInode(fs, sb, 2);
     char path[4096];
@@ -50,11 +52,11 @@ void printAllFiles(char * filename){
     free(in);
     free(sb);
 
-    fclose(fs);
+    close(fs);
 }
 
 void testNavigate(){
-    FILE * fs = fopen("testfs", "r");
+    int fs = open("testfs", O_RDONLY);
 
     navigate(fs, "/dir1/cs140");
     navigate(fs, "/dir2/dir3/");
@@ -66,7 +68,7 @@ void testNavigate(){
     navigate(fs, "/dir2/directory name with spaces/../../dir1/cs153.txt");
 
 
-    fclose(fs);
+    close(fs);
 }
 
 int main(int argc, char *argv[]){

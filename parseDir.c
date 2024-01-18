@@ -34,15 +34,15 @@ typedef struct dir_entry {
     char * name; // name of directory
 } dir_entry;
 
-void parseDirInode(FILE *, superblock *, inode *, char *);
+void parseDirInode(int, superblock *, inode *, char *);
 
 // reads file and returns an unsigned int based on data read
-int readInt(FILE *fs, int offset, int size){
+int readInt(int fs, int offset, int size){
     uchar buffer[size];
     int ret = 0;
 
-    fseek(fs, offset, SEEK_SET);
-    fread(buffer, size, 1, fs);
+    lseek(fs, offset, SEEK_SET);
+    read(fs, buffer, size);
 
     //little endian
     for(int i = 0; i < size; i++){
@@ -52,7 +52,7 @@ int readInt(FILE *fs, int offset, int size){
     return ret;
 }
 
-superblock * parseSuperBlock(FILE *fs){
+superblock * parseSuperBlock(int fs){
     superblock * sb = (superblock *) malloc(sizeof(superblock));
 
     sb->block_sz = SB_START << readInt(fs, SB_START+24, 4);
@@ -65,7 +65,7 @@ superblock * parseSuperBlock(FILE *fs){
 }
 
 // get inode data using inode number
-inode * getInode(FILE * fs, superblock * sb, int i_num){
+inode * getInode(int fs, superblock * sb, int i_num){
     uchar buffer[sb->block_sz];
 
     int block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
@@ -98,17 +98,17 @@ inode * getInode(FILE * fs, superblock * sb, int i_num){
 }
 
 // get data block using block number
-void getDataBlock(FILE * fs, superblock * sb, int block, uchar * buffer){
+void getDataBlock(int fs, superblock * sb, int block, uchar * buffer){
     int addr = sb->block_sz * block;
 
-    fseek(fs, addr, SEEK_SET);
-    fread(buffer, sb->block_sz, 1, fs);
+    lseek(fs, addr, SEEK_SET);
+    read(fs, buffer, sb->block_sz);
 
     return;
 }
 
 // gets directory entry using address
-dir_entry * getDirEntry(FILE * fs, superblock * sb, int addr){
+dir_entry * getDirEntry(int fs, superblock * sb, int addr){
     dir_entry * dir = (dir_entry *) malloc(sizeof(dir_entry));
 
     dir->inum = readInt(fs, addr, 4); // get inode number
@@ -117,8 +117,8 @@ dir_entry * getDirEntry(FILE * fs, superblock * sb, int addr){
 
     //get dir name
     dir->name = (char *) malloc((sizeof(char)*dir->name_sz)+1);
-    fseek(fs, addr+8, SEEK_SET);
-    fread(dir->name, dir->name_sz, 1, fs);
+    lseek(fs, addr+8, SEEK_SET);
+    read(fs, dir->name, dir->name_sz);
     dir->name[dir->name_sz] = '\0'; // set as string
 
     return dir;
@@ -130,7 +130,7 @@ void freeDirEntry(dir_entry * dir){
 }
 
 // print directory entry path based on address
-void printDirContents(FILE * fs, superblock * sb, int addr, char * path){
+void printDirContents(int fs, superblock * sb, int addr, char * path){
 
     // get dir entry info
     dir_entry * dir = getDirEntry(fs, sb, addr);
@@ -168,7 +168,7 @@ void printDirContents(FILE * fs, superblock * sb, int addr, char * path){
 }
 
 // parses each directory entry from directory data block
-void parseDirEntries(FILE * fs, superblock * sb, inode * in, int addr, int * bytes_read, char * path){
+void parseDirEntries(int fs, superblock * sb, inode * in, int addr, int * bytes_read, char * path){
     int curr_addr;
     int offset = 0;
 
@@ -186,7 +186,7 @@ void parseDirEntries(FILE * fs, superblock * sb, inode * in, int addr, int * byt
 }
 
 
-void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, int * bytes_read, char * path){
+void parseSingleIndirect(int fs, superblock * sb, inode *in, int * bytes_read, char * path){
     // iterate through all direct pointers in block
     // pointer size is 4 bytes
     for(int i = 0; i < sb->block_sz; i+=4){
@@ -202,7 +202,7 @@ void parseSingleIndirect(FILE * fs, superblock * sb, inode *in, int * bytes_read
 
 
 // parse directory block entries using inode
-void parseDirInode(FILE * fs, superblock * sb, inode * in, char * path){
+void parseDirInode(int fs, superblock * sb, inode * in, char * path){
     int bytes_read = 0; // total number of bytes read 
 
     char new_path[4096];

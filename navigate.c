@@ -25,7 +25,7 @@
 // searches directory and returns inode number of entry found
 // additionally parameter to indicate if looking for directory
 // returns -1 if not found
-int searchDir(FILE * fs, superblock * sb, inode * in, char * filename, int wantDir){
+int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir){
     // search in directory
     //inode direct pointers
 
@@ -85,7 +85,7 @@ int searchDir(FILE * fs, superblock * sb, inode * in, char * filename, int wantD
 }
 
 // takes in FILE pointer and path as inputs
-void navigate(FILE * fs, char * path){ 
+void navigate(int fs, char * path){ 
     superblock * sb = parseSuperBlock(fs); // get superblock info
     inode * in = getInode(fs, sb, 2); // get root inode
     int result;
