@@ -21,7 +21,6 @@ void copyBlock(int fs, int f, superblock * sb, inode * in, int block_num, int * 
     }
 }
 
-
 void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, int block_num, int * bytes_read){
     for(int i = 0; i < sb->block_sz; i+=4){
         int curr_offset = (block_num*sb->block_sz)+i; // address of direct pointer
@@ -33,13 +32,13 @@ void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, int block_nu
     }
 }
 
-
 void duplicateFile(int fs, superblock * sb, inode * in, char * name){
-    
-    // create new file
-    int f = open(name, O_CREAT | O_WRONLY);
+    //if(!strcmp(name, ".") || !strcmp(name, "..")) return;
 
-    printf("%s\n",name);
+    // create new file
+    int f = open(name, O_CREAT | O_WRONLY, 0777);
+
+    printf("file name: %s\n",name);
 
     // write to new file
     // go through all data blocks of original file
@@ -108,10 +107,18 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
     // recurse when next entry in dir is also a directory
 
     // create output directory
-    mkdir(dir_name, 0777);
 
-    strcat(path, dir_name);
-    strcat(path, "/");
+    char new_path[4096];
+    new_path[0] = '\0';
+    strcat(new_path, path);
+
+    strcat(new_path, dir_name);
+    
+    mkdir(new_path, 0777);
+
+    strcat(new_path, "/");
+
+    printf("path: %s\n", new_path);
 
     int bytes_read = 0;
 
@@ -135,15 +142,26 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
             bytes_read += dir->size;
 
             inode * in_2 = getInode(fs, sb, dir->inum);
-            char new_path[4096];
-            new_path[0] = '\0';
-            strcat(new_path, path);
-            strcat(new_path, dir->name);
 
             // if file, duplicate to output
             if(!in_2->isDir){
-                //printf("new file: %s\n", new_path);
-                duplicateFile(fs, sb, in_2, new_path);
+                char new_file[4096];
+                new_file[0] = '\0';
+                strcat(new_file, new_path);
+                strcat(new_file, dir->name);
+
+                //printf("new file: %s\n", new_file);
+
+                duplicateFile(fs, sb, in_2, new_file);
+            }
+            // if directory: recurse
+            else if(strcmp(dir->name, ".") && strcmp(dir->name, "..")){ // exclude parent and own directory
+                //printf("dir name: %s\n", dir->name);
+                //printf("dir path: %s\n", new_path);
+                duplicateDir(fs, sb, in_2, dir->name, new_path);
+            }
+            else{
+                //printf("own/parent: %s\n", new_path);
             }
 
             freeDirEntry(dir);
