@@ -38,7 +38,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
     // create new file
     int f = open(name, O_CREAT | O_WRONLY, 0777);
 
-    printf("file name: %s\n",name);
+    //printf("file name: %s\n",name);
 
     // write to new file
     // go through all data blocks of original file
@@ -94,7 +94,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
         }
     }
 
-    printf("bytes read: %d\n", bytes_read);
+    //printf("bytes read: %d\n", bytes_read);
     close(f);
 
     return;
@@ -118,7 +118,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
 
     strcat(new_path, "/");
 
-    printf("path: %s\n", new_path);
+    //printf("path: %s\n", new_path);
 
     int bytes_read = 0;
 

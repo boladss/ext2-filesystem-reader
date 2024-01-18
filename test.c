@@ -99,25 +99,23 @@ void test_dup_dir(){
     duplicateDir(fs, sb, in, dir_name, path);
 }
 
-int main(int argc, char *argv[]){
-    if(argc == 1){
-        //testNavigate();
-        //test_dup();
-        test_dup_dir();
-    }
 
+int copyFiles(char * filepath){
+    char * clean_filepath = cleanInput(filepath);
+    int fs = open("testfs", O_RDONLY);
+
+    return navigate(fs, filepath);
+}
+
+
+int main(int argc, char *argv[]){
     if(argc == 2){
         printAllFiles(argv[1]);
         return 0;
     }
 
     if(argc == 3){
-        char * filepath = cleanInput(argv[2]);
-        int fs = open("testfs", O_RDONLY);
-
-        printf("filepath: %s\n", filepath);
-
-        navigate(fs, filepath);
+        return copyFiles(argv[2]);
     }
 
     return 0;

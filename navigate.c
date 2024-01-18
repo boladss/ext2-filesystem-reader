@@ -53,7 +53,7 @@ int searchBlock(int fs, superblock * sb, inode * in, int curr_addr, char * filen
             else{
                 int result = dir->inum;
                 freeDirEntry(dir);
-                printf("inode num: %u\n", result);
+                //printf("inode num: %u\n", result);
                 return result;
             }
         }
@@ -159,7 +159,7 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
 }
 
 // takes in FILE pointer and path as inputs
-void navigate(int fs, char * path){ 
+int navigate(int fs, char * path){ 
     superblock * sb = parseSuperBlock(fs); // get superblock info
     inode * in = getInode(fs, sb, 2); // get root inode
     int result;
@@ -167,13 +167,15 @@ void navigate(int fs, char * path){
     uchar data_buffer[sb->block_sz];
 
     path = cleanInput(path);
-    printf("%s\n", path);
+    //printf("%s\n", path);
 
     // if root directory
     if(!strcmp(path, "/")){
-        printf("root po\n\n");
+        //printf("root po\n\n");
+
+        duplicateDir(fs, sb, getInode(fs, sb, 2), "output", "");
         //printf("inode addr: %x\n", in->addr);
-        return;
+        return 0;
     }
 
     for(int i = 1; i < strlen(path); i++){ // iterates through each filename in path
@@ -186,17 +188,19 @@ void navigate(int fs, char * path){
         }
         filename[j] = '\0';
 
-        printf("%s\n", filename);
+        //printf("%s\n", filename);
 
         // check if filename is last in path, account for trailing '/'
         if(i == strlen(path) || (i == strlen(path) -1 && path[i] == '/')){
-            printf("end of path\n");
-            printf("last file: %s\n", filename);
+            //printf("end of path\n");
+            //printf("last file: %s\n", filename);
 
             result = searchDir(fs, sb, in, filename, 0);
 
             if(result  == 0){
-                printf("no such file ://\n");
+                fprintf(stderr, "INVALID PATH\n");
+                //printf("no such file ://\n");
+                return -1;
             }
             else{
                 inode * file_in = getInode(fs, sb, result);
@@ -204,26 +208,32 @@ void navigate(int fs, char * path){
 
                 //if directory
                 if(file_in->isDir){
-                    printf("directory desu <3\n");
+                    //printf("directory desu <3\n");
+
+                    duplicateDir(fs, sb, file_in, filename, "output");
+
+                    return 0;
                 }
                 // regular file
                 else{
-                    printf("file da yo :3\n");
+                    //printf("file da yo :3\n");
                     // copy file
 
                     duplicateFile(fs, sb, file_in, filename);
+                    return 0;
                 }
             }
 
-            printf("\n");
-            return;
+            //printf("\n");
+            return 0;
         }
 
         result = searchDir(fs, sb, in, filename, 1);
 
         if(result == 0) {
-            printf("no file found\n");
-            return;
+            fprintf(stderr, "INVALID PATH\n");
+            //printf("no file found\n");
+            return -1;
         }
         else{
             free(in);
