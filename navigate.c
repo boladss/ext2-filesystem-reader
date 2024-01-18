@@ -63,6 +63,30 @@ int searchBlock(int fs, superblock * sb, inode * in, int curr_addr, char * filen
     return 0;
 }
 
+
+int searchSingleIndirectDir(int fs, superblock * sb, inode * in, char * filename, int * bytes_read, int wantDir){
+    int result;
+
+    //iterate through each pointer
+    for(int i = 0; i < sb->block_sz; i+=4){
+        int curr_offset = (in->single_ind*sb->block_sz)+i; // offset of direct pointer
+        int curr_addr = readInt(fs, curr_offset, 4) * 4096; // address of data block
+
+            //skip empty pointers
+        if(curr_addr == 0) continue;
+
+        //printf("%x\n", curr_addr);
+
+        result = searchBlock(fs, sb, in, curr_addr, filename, bytes_read, wantDir);
+        //printf("%d\n", result);
+
+        if(result != 0) return result;
+    }
+
+    return 0;
+}
+
+
 // searches directory and returns inode number of entry found
 // additionally parameter to indicate if looking for directory
 // returns 0 if not found (should be fine since block zero always contains the superblock)
@@ -86,66 +110,36 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
         result = searchBlock(fs, sb, in, curr_addr, filename, &bytes_read, wantDir);
 
         if(result != 0) return result;
-
-        /*while(bytes_read < in->file_sz && (offset < sb->block_sz)){ 
-            dir_entry * dir = getDirEntry(fs, sb, curr_addr+offset);
-            
-            offset += dir->size;
-            bytes_read += dir->size;
-
-            //printf("dir name: %s\n", dir->name);
-            //printf("curr adrr: %d\n", curr_addr);
-
-            if(!strcmp(filename, dir->name)){ // file is found
-                // get inode and check if directory
-
-                if(wantDir){
-                    inode * dir_in = getInode(fs, sb, dir->inum);
-                    if(dir_in->isDir){ // path is found
-                        int result = dir->inum;
-
-                        freeDirEntry(dir);
-                        free(dir_in);
-
-                        return result;
-                    }
-                    free(dir_in);
-                }
-                else{
-                    int result = dir->inum;
-                    freeDirEntry(dir);
-                    return result;
-                }
-            }
-
-            freeDirEntry(dir);
-        }*/
     }
 
     //inode single indirect
     if(in->single_ind){
         //printf("single\n");
+        result = searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
+        if(result != 0) return result;
+    }
 
-        //iterate through each pointer
-        for(int i = 0; i < sb->block_sz; i+=4){
-            int curr_offset = (in->single_ind*sb->block_sz)+i; // offset of direct pointer
-            int curr_addr = readInt(fs, curr_offset, 4) * 4096; // address of data block
+    //double
+    if(in->double_ind){ 
+        // handler for double indirect block
+        // contains pointers to block containing singly indirect blocks
 
-            //skip empty pointers
-            if(curr_addr == 0) continue;
-
-            printf("%x\n", curr_addr);
-
-            result = searchBlock(fs, sb, in, curr_addr, filename, &bytes_read, wantDir);
-            printf("%d\n", result);
-
-            if(result != 0) return result;
+        for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
         }
     }
 
-    //inode double indirect
+    //triple
+    if(in->triple_ind){
+        // handler for triple indirect block
+        // contains pointers to blocks containing doubly indirect blocks
 
-    //inode triple indirect
+        for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+            for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
+                searchSingleIndirectDir(fs, sb, in, filename, &bytes_read, wantDir);
+            }
+        }
+    }
 
     return 0;
 }
