@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+//#include "parseDir.c"
+#include "duplicate.c"
 #include "navigate.c"
 
 void test_parseDir(int fs){
@@ -63,6 +65,7 @@ void testNavigate(){
     navigate(fs, "/dir2//dir3/dir3_2/sankyuu.png");
     navigate(fs, "/dir2/dir3////.//././../dir3/dir3_2/sankyuu.png");
     navigate(fs, "/d");
+    navigate(fs, "/cs140.txt");
     navigate(fs, "/");
     navigate(fs, "/./dir1/..//");
     navigate(fs, "/dir2/directory name with spaces////../../dir1/cs153.txt");
@@ -71,9 +74,18 @@ void testNavigate(){
     close(fs);
 }
 
+void test_dup(){
+    int fs = open("testfs", O_RDONLY);
+    superblock * sb = parseSuperBlock(fs);
+    inode * in = getInode(fs, sb, 14);
+
+    duplicate_file(fs, sb, "cs140.txt",in);
+}
+
 int main(int argc, char *argv[]){
     if(argc == 1){
-        testNavigate();
+        //testNavigate();
+        test_dup();
     }
 
     if(argc == 2){
