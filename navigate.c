@@ -21,6 +21,48 @@
 // file path < 4096 characteers
 // file object name < 256 characters
 
+
+// searches directory data block for file
+int searchBlock(int fs, superblock * sb, inode * in, int curr_addr, char * filename, int * bytes_read, int wantDir){
+    int offset = 0;
+    
+    while(*bytes_read < in->file_sz && (offset < sb->block_sz)){ 
+        dir_entry * dir = getDirEntry(fs, sb, curr_addr+offset);
+            
+        offset += dir->size;
+        *bytes_read += dir->size;
+
+        //printf("dir name: %s\n", dir->name);
+        //printf("curr adrr: %d\n", curr_addr);
+
+        if(!strcmp(filename, dir->name)){ // file is found
+                // get inode and check if directory
+
+            if(wantDir){
+                inode * dir_in = getInode(fs, sb, dir->inum);
+                if(dir_in->isDir){ // path is found
+                    int result = dir->inum;
+
+                    freeDirEntry(dir);
+                    free(dir_in);
+
+                    return result;
+                    }
+                free(dir_in);
+            }
+            else{
+                int result = dir->inum;
+                freeDirEntry(dir);
+                return result;
+            }
+        }
+
+        freeDirEntry(dir);
+    }
+
+    return 0;
+}
+
 // searches directory and returns inode number of entry found
 // additionally parameter to indicate if looking for directory
 // returns 0 if not found (should be fine since block zero always contains the superblock)
@@ -31,15 +73,21 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
     int bytes_read = 0; // total number of bytes read 
     int offset = 0;
     int curr_addr;
+    int result;
 
     // for each direct block
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) continue; // skip empty inode
+
+        //printf("direct block\n");
         
-        offset = 0;
         curr_addr = in->direct[i]*sb->block_sz;
 
-        while(bytes_read < in->file_sz && (offset < sb->block_sz)){ 
+        result = searchBlock(fs, sb, in, curr_addr, filename, &bytes_read, wantDir);
+
+        if(result != 0) return result;
+
+        /*while(bytes_read < in->file_sz && (offset < sb->block_sz)){ 
             dir_entry * dir = getDirEntry(fs, sb, curr_addr+offset);
             
             offset += dir->size;
@@ -71,10 +119,29 @@ int searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir)
             }
 
             freeDirEntry(dir);
-        }
+        }*/
     }
 
     //inode single indirect
+    if(in->single_ind){
+        //printf("single\n");
+
+        //iterate through each pointer
+        for(int i = 0; i < sb->block_sz; i+=4){
+            int curr_offset = (in->single_ind*sb->block_sz)+i; // offset of direct pointer
+            int curr_addr = readInt(fs, curr_offset, 4) * 4096; // address of data block
+
+            //skip empty pointers
+            if(curr_addr == 0) continue;
+
+            printf("%x\n", curr_addr);
+
+            result = searchBlock(fs, sb, in, curr_addr, filename, &bytes_read, wantDir);
+            printf("%d\n", result);
+
+            if(result != 0) return result;
+        }
+    }
 
     //inode double indirect
 
@@ -97,7 +164,7 @@ void navigate(int fs, char * path){
     // if root directory
     if(!strcmp(path, "/")){
         printf("root po\n\n");
-        printf("inode addr: %x\n", in->addr);
+        //printf("inode addr: %x\n", in->addr);
         return;
     }
 
@@ -118,7 +185,6 @@ void navigate(int fs, char * path){
             printf("end of path\n");
             printf("last file: %s\n", filename);
 
-            // if file is invalid
             result = searchDir(fs, sb, in, filename, 0);
 
             if(result  == 0){
@@ -126,7 +192,7 @@ void navigate(int fs, char * path){
             }
             else{
                 inode * in_2 = getInode(fs, sb, result);
-                printf("inode addr: %x\n", in_2->addr);
+                //printf("inode addr: %x\n", in_2->addr);
 
                 //if directory
                 if(in_2->isDir){

@@ -64,6 +64,7 @@ void testNavigate(){
     navigate(fs, "/dir2/dir3/");
     navigate(fs, "/dir2//dir3/dir3_2/sankyuu.png");
     navigate(fs, "/dir2/dir3////.//././../dir3/dir3_2/sankyuu.png");
+    navigate(fs, "/dir4/text154.txt");
     navigate(fs, "/d");
     navigate(fs, "/cs140.txt");
     navigate(fs, "/");
@@ -84,8 +85,8 @@ void test_dup(){
 
 int main(int argc, char *argv[]){
     if(argc == 1){
-        //testNavigate();
-        test_dup();
+        testNavigate();
+        //test_dup();
     }
 
     if(argc == 2){
