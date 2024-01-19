@@ -8,6 +8,7 @@ void printAllFiles(char * filename){
     int fs = open(filename, O_RDONLY);
     superblock * sb = parseSuperBlock(fs);
     inode * in = getInode(fs, sb, 2);
+    //inode 2 is the root directory
     char path[4096];
     path[0] = '\0';
 

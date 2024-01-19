@@ -8,14 +8,15 @@
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-#define SB_START 1024
+#define SB_START 1024 //offset from start of volume to start of superblock.
+//coincidentally also the size of the superblock.
 
 typedef struct superblock{
-    uint block_sz; // byte offsets 24-27
-    uint num_of_blocks; // byte offsets 32-35
-    uint num_of_inodes; // byte offsets 40-43
-    uint inode_sz; // byte offsets 88-89
-    uint bgdt_block_num; // block after superblock
+    uint block_sz; // byte offsets 24-27; byte size of a block
+    uint num_of_blocks; // byte offsets 32-35; number of blocks in a block group
+    uint num_of_inodes; // byte offsets 40-43; 
+    uint inode_sz; // byte offsets 88-89;
+    uint bgdt_block_num; // block after superblock;
 } superblock;
 
 typedef struct inode{
@@ -60,6 +61,8 @@ superblock * parseSuperBlock(int fs){
     sb->num_of_blocks = readInt(fs, SB_START+32, 4);
     sb->num_of_inodes = readInt(fs, SB_START+40, 4);
     sb->bgdt_block_num = (sb->block_sz == 1024) ? 2 : 1;
+    //block size is a multiple of 1024, minimum 1024.
+    //bgdt starts at block number 2 if block size is 1024, and 1 otherwise.
     sb->inode_sz = readInt(fs, SB_START+88, 2);
 
     return sb;
@@ -69,11 +72,11 @@ superblock * parseSuperBlock(int fs){
 inode * getInode(int fs, superblock * sb, uint i_num){
     uchar buffer[sb->block_sz];
 
-    uint block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
-    uint bgd_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8; // copy of bgdt will be same for all block groups
-    uint inode_table_start = readInt(fs, bgd_addr, 4); // starting block of inode table
-    uint inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
-    uint inode_addr = (inode_table_start * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
+    const uint block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
+    const uint bgd_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8; // copy of bgdt will be same for all block groups
+    const uint inode_table_start = readInt(fs, bgd_addr, 4); // starting block of inode table
+    const uint inode_index = (i_num - 1) % sb->num_of_inodes; // index of inode in table
+    const uint inode_addr = (inode_table_start * sb->block_sz) + (inode_index*sb->inode_sz); // addr of inode entry
 
     //parse inode data
     inode * in = (inode *) malloc(sizeof(inode));
@@ -83,7 +86,7 @@ inode * getInode(int fs, superblock * sb, uint i_num){
     in->file_sz = readInt(fs, inode_addr+4, 4);
     
     //number of blocks occupied by file; ceiling function
-    uint num_blocks = ((in->file_sz + sb->block_sz - 1) / sb->block_sz); 
+    //uint num_blocks = ((in->file_sz + sb->block_sz - 1) / sb->block_sz); 
     
     // direct pointers
     for(int i = 0; i < 12; i++){
