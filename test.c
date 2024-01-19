@@ -1,46 +1,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-//#include "parseDir.c"
 #include "duplicate.c"
 #include "navigate.c"
 
-void test_parseDir(int fs){
-    superblock * sb = parseSuperBlock(fs);
-    
-    printf("block size: %u\n", sb->block_sz);
-    printf("number of blocks per group: %u\n", sb->num_of_blocks);
-    printf("number of inodes per group: %u\n", sb->num_of_inodes);
-    printf("BGDT block: %u\n", sb->bgdt_block_num);
-    printf("inode size: %u\n\n", sb->inode_sz);
-
-    //printf("block num of inode 2: %u\n\n", findBlockNumber(fs, sb, 2));
-    uchar inode_buffer[sb->inode_sz];
-    inode * in = getInode(fs, sb, 2);
-    /*printf("data of inode 2:\n");
-
-    for(int i = 0; i < 16; i++){
-        for(int j = 0; j < 16; j++){
-            printf("%02x ", inode_buffer[(i*16)+j]);
-        }
-        printf("\n");
-    }
-
-    printf("\n");*/
-
-    uchar data_buffer[sb->block_sz];
-    getDataBlock(fs, sb, 1537, data_buffer);
-
-    //for(int i = 0; i < sb->block_sz; i++){
-    //    printf("%c", data_buffer[i]);
-    //}
-
-    char path[4096];
-
-    parseDirInode(fs, sb, in, path);
-
-    free(in);
-}
 
 void printAllFiles(char * filename){
     int fs = open(filename, O_RDONLY);
@@ -56,49 +19,6 @@ void printAllFiles(char * filename){
 
     close(fs);
 }
-
-void testNavigate(){
-    int fs = open("testfs", O_RDONLY);
-
-    navigate(fs, "///dir1/cs140");
-    navigate(fs, "/dir2/dir3/");
-    navigate(fs, "/dir2//dir3/dir3_2/sankyuu.png");
-    navigate(fs, "/dir2/dir3////.//././../dir3/dir3_2/sankyuu.png");
-    navigate(fs, "/dir4/text154.txt");
-    navigate(fs, "/d");
-    navigate(fs, "/cs140.txt");
-    navigate(fs, "/");
-    navigate(fs, "/./dir1/..//");
-    navigate(fs, "/dir2/directory name with spaces////../../dir1/cs153.txt");
-    navigate(fs, "/dir2/book.txt");
-
-
-    close(fs);
-}
-
-void test_dup(){
-    int fs = open("testfs", O_RDONLY);
-    superblock * sb = parseSuperBlock(fs);
-    inode * in = getInode(fs, sb, 14);
-    inode * in_2 = getInode(fs, sb, 21);
-    inode * in_3 = getInode(fs, sb, 22);
-
-    duplicateFile(fs, sb, in, "dir/cs140.txt");
-    duplicateFile(fs, sb, in_2, "ibuprofen.jpg");
-    duplicateFile(fs, sb, in_3, "book.txt");
-}
-
-void test_dup_dir(){
-    int fs = open("testfs", O_RDONLY);
-    superblock * sb = parseSuperBlock(fs);
-    inode * in = getInode(fs, sb, 2); //root
-
-    char dir_name[256] = "output";
-    char path[4096] = "";
-
-    duplicateDir(fs, sb, in, dir_name, path);
-}
-
 
 int copyFiles(char * filepath){
     char * clean_filepath = cleanInput(filepath);

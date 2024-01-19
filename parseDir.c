@@ -58,7 +58,7 @@ superblock * parseSuperBlock(int fs){
     sb->block_sz = SB_START << readInt(fs, SB_START+24, 4);
     sb->num_of_blocks = readInt(fs, SB_START+32, 4);
     sb->num_of_inodes = readInt(fs, SB_START+40, 4);
-    sb->bgdt_block_num = (SB_START / sb->block_sz) + 1;
+    sb->bgdt_block_num = (sb->block_sz == 1024) ? 2 : 1;
     sb->inode_sz = readInt(fs, SB_START+88, 2);
 
     return sb;
