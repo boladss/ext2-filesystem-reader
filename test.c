@@ -19,11 +19,15 @@ void printAllFiles(char * filename){
     close(fs);
 }
 
-int copyFiles(char * filepath){
+int copyFiles(char * filesystem, char * filepath){
     char * clean_filepath = cleanInput(filepath);
-    int fs = open("testfs", O_RDONLY);
+    int fs = open(filesystem, O_RDONLY);
 
-    return navigate(fs, filepath);
+    int result = navigate(fs, filepath);
+
+    close(fs);
+
+    return result;
 }
 
 
@@ -34,7 +38,7 @@ int main(int argc, char *argv[]){
     }
 
     if(argc == 3){
-        return copyFiles(argv[2]);
+        return copyFiles(argv[1], argv[2]);
     }
 
     return 0;
