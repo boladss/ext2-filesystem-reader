@@ -6,7 +6,7 @@
 #include "parseDir.c"
 
 // copy data block from fs to f
-void copyBlock(int fs, int f, superblock * sb, inode * in, int block_num, int * bytes_read){
+void copyBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
     uchar data_buf[sb->block_sz];
     uchar curr[1];
 
@@ -21,10 +21,10 @@ void copyBlock(int fs, int f, superblock * sb, inode * in, int block_num, int * 
     }
 }
 
-void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, int block_num, int * bytes_read){
+void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
     for(int i = 0; i < sb->block_sz; i+=4){
-        int curr_offset = (block_num*sb->block_sz)+i; // address of direct pointer
-        int block_num = readInt(fs, curr_offset, 4); // data block number
+        uint curr_offset = (block_num*sb->block_sz)+i; // address of direct pointer
+        uint block_num = readInt(fs, curr_offset, 4); // data block number
         
         if(block_num == 0) continue;
 
@@ -45,7 +45,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
     //get inode of file
     // for each data block: write to new file
 
-    int bytes_read = 0;
+    uint bytes_read = 0;
 
     //direct pointers
     for(int i = 0; i < 12; i++){
@@ -68,8 +68,8 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
             // get double block
 
-            int d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
-            int d_block_num = readInt(fs, d_block, 4); // data block number
+            uint d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
+            uint d_block_num = readInt(fs, d_block, 4); // data block number
 
            copySingleIndBlock(fs, f, sb, in, d_block_num, &bytes_read);
         }
@@ -82,12 +82,12 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
 
         for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
             // get triple block
-            int t_block = (in->triple_ind*sb->block_sz)+i;
-            int t_block_num = readInt(fs, t_block, 4); // data block number
+            uint t_block = (in->triple_ind*sb->block_sz)+i;
+            uint t_block_num = readInt(fs, t_block, 4); // data block number
 
             for(int i = 0; i < sb->block_sz; i+= 4){ // pointer size is 4 bytes
-                int d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
-                int d_block_num = readInt(fs, d_block, 4); // data block number
+                uint d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
+                uint d_block_num = readInt(fs, d_block, 4); // data block number
 
                 copySingleIndBlock(fs, f, sb, in, d_block_num, &bytes_read);
             }
@@ -120,7 +120,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
 
     //printf("path: %s\n", new_path);
 
-    int bytes_read = 0;
+    uint bytes_read = 0;
 
     // traverse through each entry 
     //     if file: duplicate file
@@ -131,8 +131,8 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) continue; // skip empty inode
 
-        int curr_addr = in->direct[i]*sb->block_sz;;
-        int offset = 0;
+        uint curr_addr = in->direct[i]*sb->block_sz;;
+        uint offset = 0;
 
         // directory entry
         while(bytes_read < in->file_sz && (offset < sb->block_sz)){ 

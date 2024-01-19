@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "duplicate.c"
 #include "navigate.c"
 
 
