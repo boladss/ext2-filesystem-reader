@@ -21,7 +21,6 @@ void printAllFiles(char * filename){
 }
 
 int copyFiles(char * filesystem, char * filepath){
-    char * clean_filepath = cleanInput(filepath);
     int fs = open(filesystem, O_RDONLY);
 
     int result = navigate(fs, filepath);

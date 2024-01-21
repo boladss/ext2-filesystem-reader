@@ -67,8 +67,6 @@ superblock * parseSuperBlock(int fs){
 
 // get inode data using inode number
 inode * getInode(int fs, superblock * sb, uint i_num){
-    uchar buffer[sb->block_sz];
-
     const uint block_group_num = (i_num - 1) / sb->num_of_inodes; // which block group the inode is in
     const uint bgd_addr = (sb->bgdt_block_num*sb->block_sz) + (block_group_num*32) + 8; // copy of bgdt will be same for all block groups
     const uint inode_table_start = readInt(fs, bgd_addr, 4); // starting block of inode table
@@ -81,9 +79,6 @@ inode * getInode(int fs, superblock * sb, uint i_num){
     in->addr = inode_addr;
     in->isDir = (0x4000 & readInt(fs, inode_addr, 2)) >> 14;
     in->file_sz = readInt(fs, inode_addr+4, 4);
-    
-    //number of blocks occupied by file; ceiling function
-    //uint num_blocks = ((in->file_sz + sb->block_sz - 1) / sb->block_sz); 
     
     // direct pointers
     for(int i = 0; i < 12; i++){

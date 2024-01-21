@@ -30,9 +30,6 @@ char * cleanInput(char * input){
             input++;
         }
 
-        char curr[256];
-        int j = 0;
-
         while(*input != '\0' && *input != '/'){
             output[i++] = *input;
             input++;
@@ -175,8 +172,6 @@ int navigate(int fs, char * path){
     superblock * sb = parseSuperBlock(fs); // get superblock info
     inode * in = getInode(fs, sb, 2); // get root inode
     int result;
-
-    uchar data_buffer[sb->block_sz];
 
     path = cleanInput(path);
 
