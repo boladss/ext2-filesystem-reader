@@ -8,17 +8,21 @@
 // copy data block from fs to f
 void copyBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
     uchar data_buf[sb->block_sz];
-    uchar curr[1];
-
     getDataBlock(fs, sb, block_num, data_buf);
-    int offset = 0;
 
-    while(offset < sb->block_sz && *bytes_read < in->file_sz){
-        curr[0] = data_buf[offset];
-        write(f, curr, 1);
-        offset++;
-        (*bytes_read)++;
+    uint bytes_to_write;
+
+    // if file size left >= 4096
+    // copy block
+    if(in->file_sz - *bytes_read >= sb->block_sz){
+        bytes_to_write = sb->block_sz;
     }
+    else{
+        bytes_to_write = in->file_sz - *bytes_read;
+    }
+    
+    write(f, data_buf, bytes_to_write);
+    (*bytes_read) += bytes_to_write;
 }
 
 void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
