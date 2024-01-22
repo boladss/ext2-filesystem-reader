@@ -157,9 +157,15 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
 
     char new_path[4096];
     new_path[0] = '\0';
+    
     strcat(new_path, path);
 
-    strcat(new_path, dir_name);
+    // does not add directory name to folder if highest level directory
+    if(strcmp(path, "output")){
+        strcat(new_path, dir_name);
+    }
+
+    printf("new path: %s\n", new_path);
     
     mkdir(new_path, 0777);
 
