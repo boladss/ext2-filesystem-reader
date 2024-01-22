@@ -24,7 +24,7 @@ void copyBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint 
     (*bytes_read) += bytes_to_write;
 }
 
-void copySingleIndBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
+void copySingleIndirectBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint * bytes_read){
     for(int i = 0; i < sb->block_sz; i+=4){
         uint curr_offset = (block_num*sb->block_sz)+i; // address of direct pointer
         uint block_num = readInt(fs, curr_offset, 4); // data block number
@@ -55,7 +55,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
 
     // single indirect pointers
     if(in->single_ind){
-        copySingleIndBlock(fs, f, sb, in, in->single_ind, &bytes_read);
+        copySingleIndirectBlock(fs, f, sb, in, in->single_ind, &bytes_read);
     }
 
     // double indirect pointers
@@ -69,7 +69,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
             uint d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
             uint d_block_num = readInt(fs, d_block, 4); // data block number
 
-           copySingleIndBlock(fs, f, sb, in, d_block_num, &bytes_read);
+           copySingleIndirectBlock(fs, f, sb, in, d_block_num, &bytes_read);
         }
     }
 
@@ -87,7 +87,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
                 uint d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
                 uint d_block_num = readInt(fs, d_block, 4); // data block number
 
-                copySingleIndBlock(fs, f, sb, in, d_block_num, &bytes_read);
+                copySingleIndirectBlock(fs, f, sb, in, d_block_num, &bytes_read);
             }
         }
     }
@@ -133,7 +133,7 @@ void copyDir(int fs, superblock * sb, inode * in, int block_num, int * bytes_rea
     }
 }
 
-void copySingleIndDir(int fs, superblock * sb, inode * in, int block_num, int * bytes_read, char * new_path){
+void copySingleIndirectDir(int fs, superblock * sb, inode * in, int block_num, int * bytes_read, char * new_path){
     for(int i = 0; i < sb->block_sz; i+=4){
         uint curr_offset = (block_num*sb->block_sz)+i;
         uint curr_block = readInt(fs, curr_offset, 4);
@@ -182,7 +182,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
 
     // single indirect pointers
     if(in->single_ind){
-        copySingleIndDir(fs, sb, in, in->single_ind, &bytes_read, new_path);
+        copySingleIndirectDir(fs, sb, in, in->single_ind, &bytes_read, new_path);
     }
 
     // double indirect pointers
@@ -196,7 +196,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
             uint d_block = (in->double_ind*sb->block_sz)+i; // address of direct pointer
             uint d_block_num = readInt(fs, d_block, 4); // data block number
 
-           copySingleIndDir(fs, sb, in, d_block_num, &bytes_read, new_path);
+           copySingleIndirectDir(fs, sb, in, d_block_num, &bytes_read, new_path);
         }
     }
 
@@ -214,7 +214,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
                 uint d_block = (t_block_num*sb->block_sz)+i; // address of direct pointer
                 uint d_block_num = readInt(fs, d_block, 4); // data block number
 
-                copySingleIndDir(fs, sb, in, d_block_num, &bytes_read, new_path);
+                copySingleIndirectDir(fs, sb, in, d_block_num, &bytes_read, new_path);
             }
         }
     }
