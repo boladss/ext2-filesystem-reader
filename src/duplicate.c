@@ -12,8 +12,7 @@ void copyBlock(int fs, int f, superblock * sb, inode * in, uint block_num, uint 
 
     uint bytes_to_write;
 
-    // if file size left >= 4096
-    // copy block
+    // if file size left >= 4096, copy full block
     if(in->file_sz - *bytes_read >= sb->block_sz){
         bytes_to_write = sb->block_sz;
     }
@@ -42,25 +41,24 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
 
     // write to new file
     // go through all data blocks of original file
-    //get inode of file
+    // get inode of file
     // for each data block: write to new file
 
     uint bytes_read = 0;
 
-    //direct pointers
+    // direct pointers
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) continue; //skip empty pointers
 
         copyBlock(fs, f, sb, in, in->direct[i], &bytes_read);
     }
 
-    //indirect pointers
-    //single
+    // single indirect pointers
     if(in->single_ind){
         copySingleIndBlock(fs, f, sb, in, in->single_ind, &bytes_read);
     }
 
-    //double
+    // double indirect pointers
     if(in->double_ind){ 
         // handler for double indirect block
         // contains pointers to block containing singly indirect blocks
@@ -75,7 +73,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
         }
     }
 
-    //triple
+    // triple indirect pointers
     if(in->triple_ind){
         // handler for triple indirect block
         // contains pointers to blocks containing doubly indirect blocks
@@ -101,7 +99,7 @@ void duplicateFile(int fs, superblock * sb, inode * in, char * name){
 
 void duplicateDir(int, superblock *, inode *, char *, char *);
 
-// helper for duplicate dir to copy directory entry blocks
+// helper for duplicateDir() to copy directory entry blocks
 void copyDir(int fs, superblock * sb, inode * in, int block_num, int * bytes_read, char * new_path){
     uint curr_addr = block_num*sb->block_sz;
     uint offset = 0;
@@ -115,7 +113,7 @@ void copyDir(int fs, superblock * sb, inode * in, int block_num, int * bytes_rea
 
         inode * in_2 = getInode(fs, sb, dir->inum);
 
-        // if file, duplicate to output
+        // if file: duplicate to output
         if(!in_2->isDir){
             char new_file[4096];
             new_file[0] = '\0';
@@ -182,13 +180,12 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
         copyDir(fs, sb, in, in->direct[i], &bytes_read, new_path);   
     }
 
-    // indirect pointers
-    // single
+    // single indirect pointers
     if(in->single_ind){
         copySingleIndDir(fs, sb, in, in->single_ind, &bytes_read, new_path);
     }
 
-    //double
+    // double indirect pointers
     if(in->double_ind){ 
         // handler for double indirect block
         // contains pointers to block containing singly indirect blocks
@@ -203,7 +200,7 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
         }
     }
 
-    //triple
+    // triple indirect pointers
     if(in->triple_ind){
         // handler for triple indirect block
         // contains pointers to blocks containing doubly indirect blocks

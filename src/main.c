@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "navigate.c"
 
-
+// Operation 1 -- Path enumeration
 void printAllFiles(char * filename){
     int fs = open(filename, O_RDONLY);
     superblock * sb = parseSuperBlock(fs);
@@ -20,6 +20,7 @@ void printAllFiles(char * filename){
     close(fs);
 }
 
+// Operation 2 -- Filesystem object extraction
 int copyFiles(char * filesystem, char * filepath){
     int fs = open(filesystem, O_RDONLY);
 

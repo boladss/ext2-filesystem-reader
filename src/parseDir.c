@@ -209,20 +209,20 @@ void parseDirInode(int fs, superblock * sb, inode * in, char * path){
     // print directory path
     printf("%s\n", path);
 
-    //direct pointers to data block
+    // direct pointers to data block
     for(int i = 0; i < 12; i++){
         if(in->direct[i] == 0) continue; //skip empty pointers
 
         parseDirEntries(fs, sb, in, in->direct[i]*sb->block_sz, &bytes_read, path);
     }
 
-    //single
+    // single indirect pointer
     if(in->single_ind){
         // handler for single indirect block
         parseSingleIndirect(fs, sb, in, in->single_ind, &bytes_read, path);
     }
 
-    //double
+    // double indirect pointer
     if(in->double_ind){ 
         // handler for double indirect block
         // contains pointers to block containing singly indirect blocks
@@ -237,7 +237,7 @@ void parseDirInode(int fs, superblock * sb, inode * in, char * path){
         }
     }
 
-    //triple
+    // triple indirect
     if(in->triple_ind){
         // handler for triple indirect block
         // contains pointers to blocks containing doubly indirect blocks

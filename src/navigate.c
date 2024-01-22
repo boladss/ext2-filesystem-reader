@@ -76,19 +76,19 @@ uint searchBlock(int fs, superblock * sb, inode * in, uint curr_addr, char * fil
         freeDirEntry(dir);
     }
 
-    return 0;
+    return 0; // not found
 }
 
 
 uint searchSingleIndirectDir(int fs, superblock * sb, inode * in, int block_num, char * filename, int * bytes_read, int wantDir){
     uint result;
 
-    //iterate through each pointer
+    // iterate through each pointer
     for(int i = 0; i < sb->block_sz; i+=4){
         uint curr_offset = (block_num*sb->block_sz)+i; // offset of direct pointer
         uint curr_addr = readInt(fs, curr_offset, 4) * 4096; // address of data block
 
-        //skip empty pointers
+        // skip empty pointers
         if(curr_addr == 0) continue;
 
         result = searchBlock(fs, sb, in, curr_addr, filename, bytes_read, wantDir);
@@ -96,17 +96,14 @@ uint searchSingleIndirectDir(int fs, superblock * sb, inode * in, int block_num,
         if(result != 0) return result;
     }
 
-    return 0;
+    return 0; // not found
 }
 
 
 // searches directory and returns inode number of entry found
-// additionally parameter to indicate if looking for directory
+// wantDir = parameter to indicate if looking for directory
 // returns 0 if not found (should be fine since block zero always contains the superblock)
 uint searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir){
-    // search in directory
-    //inode direct pointers
-
     uint bytes_read = 0; // total number of bytes read 
     uint curr_addr;
     uint result;
@@ -122,13 +119,13 @@ uint searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir
         if(result != 0) return result;
     }
 
-    //inode single indirect
+    // single indirect block
     if(in->single_ind){
         result = searchSingleIndirectDir(fs, sb, in, in->single_ind, filename, &bytes_read, wantDir);
         if(result != 0) return result;
     }
 
-    //double
+    // double indirect block
     if(in->double_ind){ 
         // handler for double indirect block
         // contains pointers to block containing singly indirect blocks
@@ -144,7 +141,7 @@ uint searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir
         }
     }
 
-    //triple
+    // triple indirect block
     if(in->triple_ind){
         // handler for triple indirect block
         // contains pointers to blocks containing doubly indirect blocks
@@ -164,7 +161,7 @@ uint searchDir(int fs, superblock * sb, inode * in, char * filename, int wantDir
         }
     }
 
-    return 0;
+    return 0; // not found
 }
 
 // takes in FILE pointer and path as inputs
@@ -175,23 +172,25 @@ int navigate(int fs, char * path){
 
     path = cleanInput(path);
 
-    // if root directory
+    // if root directory, duplicate everything, no need to search
     if(!strcmp(path, "/")){
         duplicateDir(fs, sb, getInode(fs, sb, 2), "output", "");
         return 0;
     }
 
-    for(int i = 1; i < strlen(path); i++){ // iterates through each filename in path
+    // iterates through each filename in path
+    for(int i = 1; i < strlen(path); i++){ 
         char filename[256];
 
-        // copies filename from path
+        // copies current filename from path
         int j = 0;
         while(i < strlen(path) && path[i] != '/' ){
             filename[j++] = path[i++];
         }
         filename[j] = '\0';
 
-        // check if filename is last in path, account for trailing '/'
+        // check if filename is last in path i.e., the file/dir we want to extract
+        // (accounts for trailing '/')
         if(i == strlen(path) || (i == strlen(path) -1 && path[i] == '/')){
             result = searchDir(fs, sb, in, filename, 0);
 
@@ -202,12 +201,12 @@ int navigate(int fs, char * path){
             else{
                 inode * file_in = getInode(fs, sb, result);
 
-                //if directory
+                // extract directory
                 if(file_in->isDir){
                     duplicateDir(fs, sb, file_in, filename, "output");
                     return 0;
                 }
-                // regular file
+                // extract regular file
                 else{
                     duplicateFile(fs, sb, file_in, filename);
                     return 0;
@@ -217,6 +216,9 @@ int navigate(int fs, char * path){
             return 0;
         }
 
+        // not yet the last filename in path?
+        // we have to traverse filepath further,
+        // obtain next directory/file in the filepath
         result = searchDir(fs, sb, in, filename, 1);
 
         if(result == 0) {
