@@ -164,8 +164,6 @@ void duplicateDir(int fs, superblock * sb, inode * in, char * dir_name, char * p
     if(strcmp(path, "output")){
         strcat(new_path, dir_name);
     }
-
-    printf("new path: %s\n", new_path);
     
     mkdir(new_path, 0777);
 
