@@ -1,3 +1,5 @@
+This project was completed by: January 22, 2024
+
 ## Contributors
 - [zzz-acha](https://github.com/zzz-acha)
 - [boladss](https://github.com/boladss)
